@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
-import "../styles/auth.css";
+import { auth } from "../../utils/firebase";
 
 const Signup = ({ switchToLogin }) => {
   const [email, setEmail] = useState("");
@@ -11,7 +10,6 @@ const Signup = ({ switchToLogin }) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       alert("Signup successful");
-      switchToLogin();
     } catch (error) {
       alert(error.message);
     }
