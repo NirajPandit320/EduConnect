@@ -1,12 +1,16 @@
 # Node dependencies
 node_modules/
+npm-debug.log*
 
 # Environment variables
 .env
-
+.env.local
 # React / build files
 build/
 dist/
+
+# Firebase secrets
+*serviceAccount*.json
 
 # Logs
 npm-debug.log*
@@ -16,3 +20,4 @@ yarn-error.log*
 .DS_Store
 # Firebase admin keys
 firebaseServiceAccount*.json
+Thumbs.db
