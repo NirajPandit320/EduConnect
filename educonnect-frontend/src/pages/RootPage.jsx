@@ -1,19 +1,24 @@
 import Header from "../components/navigation/Header";
 import Footer from "../components/navigation/Footer";
-import UsersList from "../components/users/UsersList";
-const RootPage = () => {
+import PostsList from "../components/posts/PostsList";
 
+
+const RootPage = () => {
   return (
-    <div className="root-page">
+    <div className="root-layout">
       <Header />
-      <section>
-        <h1>Welcome to EduConnect: AUTHENTICATED</h1>
-        {/* <PostsList /> */}
-        <UsersList />
-      </section>
+
+      <main className="main-content">
+        <h1 className="welcome-text">
+          Welcome to <span>EduConnect</span>
+        </h1>
+
+        <PostsList />
+      </main>
+
       <Footer />
     </div>
   );
 };
 
-export default RootPage;   
+export default RootPage;

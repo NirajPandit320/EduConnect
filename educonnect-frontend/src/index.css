@@ -187,3 +187,162 @@ footer {
   display: flex;
   gap: 6px;
 }
+
+/* ROOT LAYOUT */
+
+.root-layout {
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+
+.main-header {
+  height: 70px;
+  background: #1a1a1a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  color: #9b6df3;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-email {
+  font-size: 14px;
+  color: #ccc;
+}
+
+/* MAIN CONTENT */
+
+.main-content {
+  flex: 1;
+  padding: 40px;
+}
+
+.welcome-text {
+  font-size: 32px;
+  margin-bottom: 30px;
+}
+
+.welcome-text span {
+  color: #9b6df3;
+}
+
+/* POSTS */
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.post-item {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  transition: transform 0.2s ease;
+}
+
+.post-item:hover {
+  transform: translateY(-4px);
+}
+
+.post-item h2 {
+  color: #9b6df3;
+}
+
+.post-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+/* FOOTER */
+
+footer {
+  height: 60px;
+  background: #1a1a1a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #2a2a2a;
+}
+
+/* ================= DASHBOARD LAYOUT ================= */
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f1fa;
+}
+
+/* ================= SIDEBAR ================= */
+
+.sidebar {
+  width: 240px;
+  background: linear-gradient(180deg, #9b6df3, #7c4bd1);
+  color: white;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logo {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.sidebar-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sidebar-menu li {
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.sidebar-menu li:hover,
+.sidebar-menu .active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.comment-section {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.comment-section input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.comments {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #555;
+}

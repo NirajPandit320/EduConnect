@@ -2,8 +2,6 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   posts: [],
-  loading: true,
-  error: null,
 };
 
 const postsSlice = createSlice({
@@ -12,18 +10,24 @@ const postsSlice = createSlice({
   reducers: {
     setPosts(state, action) {
       state.posts = action.payload;
-      state.loading = false;
     },
-    clearPosts(state) {
-      state.posts = [];
-      state.loading = false;
+
+    likePost(state, action) {
+      const post = state.posts.find(p => p.id === action.payload);
+      if (post) {
+        post.likes += 1;
+      }
     },
-    setError(state, action) {
-      state.error = action.payload;
-      state.loading = false;
+
+    addComment(state, action) {
+      const { postId, comment } = action.payload;
+      const post = state.posts.find(p => p.id === postId);
+      if (post) {
+        post.comments.push(comment);
+      }
     },
   },
 });
 
-export const { setPosts, clearPosts, setError } = postsSlice.actions;
+export const { setPosts, likePost, addComment } = postsSlice.actions;
 export default postsSlice.reducer;
