@@ -19,5 +19,11 @@ router.post("/create", (req, res) => {
     data: { uid, email, role },
   });
 });
+const {
+  createUserProfile,
+} = require("../controllers/user.controller");
+
+// POST /api/users
+router.post("/", createUserProfile);
 
 module.exports = router;
