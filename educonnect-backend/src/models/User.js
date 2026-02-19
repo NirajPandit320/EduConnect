@@ -1,6 +1,8 @@
 const mongoose =require ("mongoose");
 const userSchema=new mongoose.Schema(
     {
+        uid:{type: String,required: true,unique: true,
+        },
         name:{
             type:String,required:true,
         },
@@ -22,7 +24,9 @@ const userSchema=new mongoose.Schema(
         status:{
             type:String,enum:["active","inactive"],default:"active",
         },
+      
     },
-    {timestamp:true,}
+        
+    {timestamps:true,}
 );
 module.exports=mongoose.model("User",userSchema);

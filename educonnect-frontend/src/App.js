@@ -8,21 +8,34 @@ import { auth } from "./utils/firebase";
 
 function App() {
   const { user } = useSelector((state) => state.user);
-  
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("Auth state changed:", user);
-      if (user) {
-        dispatch(
-          setUser({
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-          })
-        );
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log("Auth state changed:", firebaseUser);
+
+      if (firebaseUser) {
+        try {
+          // 🔥 Fetch full profile from backend using UID
+          const response = await fetch(
+            `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
+          );
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // ✅ Store MongoDB user profile in Redux
+            dispatch(setUser(data.user));
+          } else {
+            console.error("User not found in backend");
+            dispatch(clearUser());
+          }
+
+        } catch (error) {
+          console.error("Profile fetch failed:", error);
+          dispatch(clearUser());
+        }
+
       } else {
         dispatch(clearUser());
       }
@@ -31,9 +44,7 @@ function App() {
     return () => unsubscribe();
   }, [dispatch]);
 
-  return (
-    user ? <RootPage /> : <AuthPage />
-  );
+  return user ? <RootPage /> : <AuthPage />;
 }
 
 export default App;

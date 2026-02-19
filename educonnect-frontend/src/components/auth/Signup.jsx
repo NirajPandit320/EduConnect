@@ -6,14 +6,39 @@ const Signup = ({ switchToLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSignup = async () => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("Signup successful");
-    } catch (error) {
-      alert(error.message);
-    }
-  };
+const handleSignup = async () => {
+  try {
+    // 1️⃣ Create Firebase user
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    const firebaseUser = userCredential.user;
+
+    // 2️⃣ Send user profile to backend
+    await fetch("http://localhost:5000/api/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        uid: firebaseUser.uid,
+        name: "Temporary Name",
+        email: firebaseUser.email,
+        sapId: Math.floor(Math.random() * 1000000000),
+        branch: "Computer Engineering",
+        year: 3,
+        role: "student",
+      }),
+    });
+
+    alert("Signup successful & profile saved!");
+  } catch (error) {
+    alert(error.message);
+  }
+};
 
   return (
     <div className="auth-wrapper">
