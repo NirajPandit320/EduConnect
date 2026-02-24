@@ -285,64 +285,88 @@ footer {
 }
 
 /* ================= DASHBOARD LAYOUT ================= */
-
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
-  background: #f4f1fa;
+  background: #f5f6fa;
 }
 
-/* ================= SIDEBAR ================= */
+.mobile-topbar {
+  display: none;
+  background: #8b5cf6;
+  color: white;
+  padding: 15px;
+  align-items: center;
+  gap: 15px;
+}
+
+.mobile-topbar svg {
+  font-size: 20px;
+  cursor: pointer;
+}
 
 .sidebar {
-  width: 240px;
-  background: linear-gradient(180deg, #9b6df3, #7c4bd1);
+  width: 250px;
+  background: linear-gradient(180deg, #8b5cf6, #6d28d9);
   color: white;
   padding: 30px 20px;
   display: flex;
   flex-direction: column;
+  gap: 15px;
+  transition: transform 0.3s ease;
 }
 
-.sidebar-logo {
-  font-size: 40px;
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.sidebar-menu {
-  list-style: none;
+.sidebar button {
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  padding: 10px;
+  border-radius: 6px;
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  align-items: center;
+  gap: 10px;
 }
 
-.sidebar-menu li {
-  padding: 10px 15px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.sidebar-menu li:hover,
-.sidebar-menu .active {
+.sidebar button:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.comment-section {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
+.sidebar button.active {
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.comment-section input {
+.logout-btn {
+  margin-top: auto;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.main-content {
   flex: 1;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  padding: 40px;
 }
 
-.comments {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #555;
+/* MOBILE */
+@media (max-width: 768px) {
+  .mobile-topbar {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    height: 100%;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    z-index: 1000;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    padding: 20px;
+    margin-top: 60px;
+  }
 }

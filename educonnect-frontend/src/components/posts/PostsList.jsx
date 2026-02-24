@@ -1,74 +1,70 @@
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setPosts, likePost, addComment } from "../../store/postsSlice";
+import { useSelector } from "react-redux";
 
-function generatePosts(count = 5) {
-  return Array.from({ length: count }, (_, index) => ({
-    id: index + 1,
-    title: `Post ${index + 1}`,
-    content: `This is the content of post ${index + 1}`,
-    likes: 0,
-    comments: [],
-  }));
-}
 
 const PostsList = () => {
-  const dispatch = useDispatch();
-  const posts = useSelector((state) => state.posts.posts);
+  const { user } = useSelector((state) => state.user);
+  const [posts, setPosts] = useState([]);
+  const [newPost, setNewPost] = useState("");
 
-  const [commentInputs, setCommentInputs] = useState({});
-
-  useEffect(() => {
-    dispatch(setPosts(generatePosts()));
-  }, [dispatch]);
-
-  const handleLike = (id) => {
-    dispatch(likePost(id));
+  const fetchPosts = async () => {
+    const res = await fetch("http://localhost:5000/api/posts");
+    const data = await res.json();
+    setPosts(data);
   };
 
-  const handleComment = (postId) => {
-    const comment = commentInputs[postId];
-    if (!comment) return;
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
-    dispatch(addComment({ postId, comment }));
-    setCommentInputs({ ...commentInputs, [postId]: "" });
+  const createPost = async () => {
+    
+    await fetch("http://localhost:5000/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: user._id,
+        content: newPost,
+      }),
+    });
+
+    setNewPost("");
+    fetchPosts();
+  };
+
+  const toggleLike = async (postId) => {
+    await fetch(
+      `http://localhost:5000/api/posts/${postId}/like`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user._id }),
+      }
+    );
+
+    fetchPosts();
   };
 
   return (
-    <div className="posts-list">
+    <div>
+      <h2>Posts</h2>
+
+      <textarea
+        value={newPost}
+        onChange={(e) => setNewPost(e.target.value)}
+        placeholder="Write something..."
+      />
+
+      <button onClick={createPost}>Post</button>
+
       {posts.map((post) => (
-        <div key={post.id} className="post-item">
-          <h2>{post.title}</h2>
+        <div key={post._id} className="post-item">
+          <p><strong>{post.userId?.name}</strong></p>
           <p>{post.content}</p>
 
-          <div className="post-actions">
-            <button onClick={() => handleLike(post.id)}>
-              👍 {post.likes}
-            </button>
-          </div>
-
-          <div className="comment-section">
-            <input
-              type="text"
-              placeholder="Write a comment..."
-              value={commentInputs[post.id] || ""}
-              onChange={(e) =>
-                setCommentInputs({
-                  ...commentInputs,
-                  [post.id]: e.target.value,
-                })
-              }
-            />
-            <button onClick={() => handleComment(post.id)}>
-              💬 Comment
-            </button>
-          </div>
-
-          <div className="comments">
-            {post.comments.map((c, index) => (
-              <p key={index}>• {c}</p>
-            ))}
-          </div>
+          <button onClick={() => toggleLike(post._id)}>
+            Like ({post.likes.length})
+          </button>
         </div>
       ))}
     </div>

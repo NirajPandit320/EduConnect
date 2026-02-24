@@ -15,28 +15,30 @@ function App() {
       console.log("Auth state changed:", firebaseUser);
 
       if (firebaseUser) {
-        try {
-          // 🔥 Fetch full profile from backend using UID
-          const response = await fetch(
-            `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
-          );
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
+    );
 
-          const data = await response.json();
+    const data = await response.json();
 
-          if (response.ok) {
-            // ✅ Store MongoDB user profile in Redux
-            dispatch(setUser(data.user));
-          } else {
-            console.error("User not found in backend");
-            dispatch(clearUser());
-          }
+    if (response.ok) {
+      dispatch(setUser(data.user));
+    } else {
+      
+      dispatch(setUser({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+      }));
+    }
 
-        } catch (error) {
-          console.error("Profile fetch failed:", error);
-          dispatch(clearUser());
-        }
-
-      } else {
+  } catch (error) {
+    dispatch(setUser({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+    }));
+  }
+} else {
         dispatch(clearUser());
       }
     });
