@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "../components/dashboard/Sidebar";
 import PostsList from "../components/posts/PostsList";
+import DashboardOverview from "../components/dashboard/DashboardOverview";
 
 const RootPage = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -23,7 +24,7 @@ const RootPage = () => {
       case "notifications":
         return <h2>Notifications</h2>;
       default:
-        return <h2>Dashboard Overview</h2>;
+        return <DashboardOverview />;
     }
   };
 

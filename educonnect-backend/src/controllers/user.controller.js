@@ -61,5 +61,6 @@ exports.getUserByUid = async (req, res) => {
       message: "Fetching failed",
       error: error.message,
     });
+    
   }
 };
