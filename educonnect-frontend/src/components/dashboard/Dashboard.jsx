@@ -7,6 +7,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -23,6 +24,8 @@ const Dashboard = () => {
 
   const handleUpdate = async () => {
     try {
+      setLoading(true);
+
       const response = await fetch(
         `http://localhost:5000/api/users/${user._id}`,
         {
@@ -37,32 +40,49 @@ const Dashboard = () => {
       if (response.ok) {
         dispatch(setUser(data.user));
         setIsEditing(false);
-        alert("Profile updated successfully");
       } else {
         alert(data.message);
       }
     } catch (error) {
       console.error(error);
       alert("Update failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="dashboard">
-      <h2>Welcome, {user?.name}</h2>
+    <div className="dashboard-card">
+      <h2 className="dashboard-title">
+        Welcome back, <span>{user?.name || "User"}</span>
+      </h2>
 
       {!isEditing ? (
-        <>
-          <p>Email: {user?.email}</p>
-          <p>Branch: {user?.branch}</p>
-          <p>Year: {user?.year}</p>
+        <div className="profile-info">
+          <div className="profile-row">
+            <label>Email</label>
+            <p>{user?.email}</p>
+          </div>
 
-          <button onClick={() => setIsEditing(true)}>
+          <div className="profile-row">
+            <label>Branch</label>
+            <p>{user?.branch || "-"}</p>
+          </div>
+
+          <div className="profile-row">
+            <label>Year</label>
+            <p>{user?.year || "-"}</p>
+          </div>
+
+          <button
+            className="edit-btn"
+            onClick={() => setIsEditing(true)}
+          >
             Edit Profile
           </button>
-        </>
+        </div>
       ) : (
-        <>
+        <div className="profile-edit">
           <input
             name="name"
             value={formData.name}
@@ -85,14 +105,19 @@ const Dashboard = () => {
             placeholder="Year"
           />
 
-          <button onClick={handleUpdate}>
-            Save Changes
-          </button>
+          <div className="edit-actions">
+            <button onClick={handleUpdate} disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </button>
 
-          <button onClick={() => setIsEditing(false)}>
-            Cancel
-          </button>
-        </>
+            <button
+              className="cancel-btn"
+              onClick={() => setIsEditing(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

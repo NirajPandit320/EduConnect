@@ -4,7 +4,7 @@ import PostsList from "../components/posts/PostsList";
 
 const RootPage = () => {
   const [activePage, setActivePage] = useState("dashboard");
-  const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const renderContent = () => {
     switch (activePage) {
@@ -30,13 +30,15 @@ const RootPage = () => {
   return (
     <div className="dashboard-layout">
       <Sidebar
-        setActivePage={setActivePage}
         activePage={activePage}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
+        setActivePage={setActivePage}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
 
-      <div className="main-content">{renderContent()}</div>
+      <div className="main-content">
+        {renderContent()}
+      </div>
     </div>
   );
 };

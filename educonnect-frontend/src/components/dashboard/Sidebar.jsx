@@ -11,7 +11,24 @@ import {
   FaBars,
 } from "react-icons/fa";
 
-const Sidebar = ({ setActivePage, activePage, isOpen, setIsOpen }) => {
+import { signOut } from "firebase/auth";
+import { auth } from "../../utils/firebase";
+import { useDispatch } from "react-redux";
+import { clearUser } from "../../store/userSlice";
+
+const Sidebar = ({
+  setActivePage,
+  activePage,
+  isCollapsed,
+  setIsCollapsed,
+}) => {
+  const dispatch = useDispatch();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    dispatch(clearUser());
+  };
+
   const menuItems = [
     { key: "dashboard", icon: <FaHome />, label: "Dashboard" },
     { key: "posts", icon: <FaFileAlt />, label: "Posts" },
@@ -24,34 +41,31 @@ const Sidebar = ({ setActivePage, activePage, isOpen, setIsOpen }) => {
   ];
 
   return (
-    <>
-      <div className="mobile-topbar">
-        <FaBars onClick={() => setIsOpen(!isOpen)} />
-        <h3>EduConnect</h3>
+    <div className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
+      <div className="sidebar-top">
+        <FaBars
+          className="collapse-btn"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        />
+        {!isCollapsed && <h2 className="logo">EduConnect</h2>}
       </div>
 
-      <div className={`sidebar ${isOpen ? "open" : ""}`}>
-        <h2 className="logo">EduConnect</h2>
-
-        {menuItems.map((item) => (
-          <button
-            key={item.key}
-            className={activePage === item.key ? "active" : ""}
-            onClick={() => {
-              setActivePage(item.key);
-              setIsOpen(false);
-            }}
-          >
-            {item.icon}
-            {item.label}
-          </button>
-        ))}
-
-        <button className="logout-btn">
-          <FaSignOutAlt /> Logout
+      {menuItems.map((item) => (
+        <button
+          key={item.key}
+          className={activePage === item.key ? "active" : ""}
+          onClick={() => setActivePage(item.key)}
+        >
+          {item.icon}
+          {!isCollapsed && item.label}
         </button>
-      </div>
-    </>
+      ))}
+
+      <button className="logout-btn" onClick={handleLogout}>
+        <FaSignOutAlt />
+        {!isCollapsed && "Logout"}
+      </button>
+    </div>
   );
 };
 

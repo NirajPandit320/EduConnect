@@ -1,18 +1,27 @@
-
 const Post = require("../models/Post");
+const User = require("../models/User");
 
 // CREATE POST
 exports.createPost = async (req, res) => {
   try {
     console.log("Incoming post body:", req.body);
-    const { userId, content } = req.body;
 
-    const newPost = await Post.create({ userId, content });
+    const { uid, content } = req.body;
 
-    res.status(201).json({
-      message: "Post created",
-      post: newPost,
+    if (!uid || !content) {
+      return res.status(400).json({
+        message: "uid and content are required",
+      });
+    }
+
+    const newPost = await Post.create({
+      uid,
+      content,
+      likes: [],
+      comments: [],
     });
+
+    res.status(201).json(newPost);
   } catch (error) {
     res.status(500).json({
       message: "Post creation failed",
@@ -21,14 +30,27 @@ exports.createPost = async (req, res) => {
   }
 };
 
+
 // GET ALL POSTS
+
+
 exports.getPosts = async (req, res) => {
   try {
-    const posts = await Post.find()
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 });
+    const posts = await Post.find().sort({ createdAt: -1 });
 
-    res.status(200).json(posts);
+    // Attach user info manually using uid
+    const postsWithUser = await Promise.all(
+      posts.map(async (post) => {
+        const user = await User.findOne({ uid: post.uid });
+
+        return {
+          ...post.toObject(),
+          userName: user ? user.name : "Unknown User",
+        };
+      })
+    );
+
+    res.status(200).json(postsWithUser);
   } catch (error) {
     res.status(500).json({
       message: "Fetching posts failed",
@@ -37,22 +59,27 @@ exports.getPosts = async (req, res) => {
   }
 };
 
+
 // LIKE / UNLIKE
 exports.toggleLike = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.body;
+    const { uid } = req.body;
 
     const post = await Post.findById(postId);
 
-    const alreadyLiked = post.likes.includes(userId);
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
+    const alreadyLiked = post.likes.includes(uid);
 
     if (alreadyLiked) {
-      post.likes = post.likes.filter(
-        (id) => id.toString() !== userId
-      );
+      post.likes = post.likes.filter((id) => id !== uid);
     } else {
-      post.likes.push(userId);
+      post.likes.push(uid);
     }
 
     await post.save();
@@ -66,15 +93,25 @@ exports.toggleLike = async (req, res) => {
   }
 };
 
+
 // ADD COMMENT
 exports.addComment = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId, text } = req.body;
+    const { uid, text } = req.body;
 
     const post = await Post.findById(postId);
 
-    post.comments.push({ userId, text });
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
+    post.comments.push({
+      uid,
+      text,
+    });
 
     await post.save();
 

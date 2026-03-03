@@ -1,26 +1,27 @@
 import { signOut } from "firebase/auth";
 import { auth } from "../../utils/firebase";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { clearUser } from "../../store/userSlice";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
-  const { user } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      dispatch(clearUser());
+      navigate("/"); 
     } catch (error) {
-      alert(error.message);
+      console.log(error);
     }
   };
 
   return (
     <header className="main-header">
       <div className="logo">EduConnect</div>
-
-      <div className="header-right">
-        <span className="user-email">{user?.email}</span>
-        <button onClick={handleLogout}>Logout</button>
-      </div>
+      <button onClick={handleLogout}>Logout</button>
     </header>
   );
 };

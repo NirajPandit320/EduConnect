@@ -2,9 +2,8 @@ const mongoose = require("mongoose");
 
 const postSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    uid: {
+      type: String,
       required: true,
     },
     content: {
@@ -13,15 +12,13 @@ const postSchema = new mongoose.Schema(
     },
     likes: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: String, // store uid instead of ObjectId
       },
     ],
     comments: [
       {
-        userId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+        uid: {
+          type: String,
         },
         text: String,
         createdAt: {

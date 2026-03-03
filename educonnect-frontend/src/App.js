@@ -14,32 +14,37 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("Auth state changed:", firebaseUser);
 
-      if (firebaseUser) {
-  try {
-    const response = await fetch(
-      `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
-    );
-
-    const data = await response.json();
-
-    if (response.ok) {
-      dispatch(setUser(data.user));
-    } else {
-      
-      dispatch(setUser({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-      }));
-    }
-
-  } catch (error) {
-    dispatch(setUser({
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-    }));
-  }
-} else {
+      if (!firebaseUser) {
         dispatch(clearUser());
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          dispatch(setUser(data.user)); // full Mongo profile
+        } else {
+          // If backend profile not found, still login with Firebase data
+          dispatch(
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+            })
+          );
+        }
+      } catch (error) {
+        console.log("Backend fetch failed, using Firebase only");
+
+        dispatch(
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+          })
+        );
       }
     });
 
