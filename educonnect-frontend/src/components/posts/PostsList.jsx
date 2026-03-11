@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import PostComposer from "./PostComposer";
 
 const PostsList = () => {
+
   const { user } = useSelector((state) => state.user);
 
   const API = "http://localhost:5000";
 
   const [posts, setPosts] = useState([]);
-  const [newPost, setNewPost] = useState("");
-
-  const [images, setImages] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]);
 
   const [editingPostId, setEditingPostId] = useState(null);
   const [editText, setEditText] = useState("");
+
+  const [commentText, setCommentText] = useState({});
+  const [showComments, setShowComments] = useState({});
 
   const fetchPosts = async () => {
     const res = await fetch(`${API}/api/posts`);
@@ -25,41 +26,6 @@ const PostsList = () => {
     fetchPosts();
   }, []);
 
-  // IMAGE SELECT
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-
-    setImages(files);
-
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setPreviewImages(previews);
-  };
-
-  // CREATE POST
-  const createPost = async () => {
-    if (!newPost && images.length === 0) return;
-
-    const formData = new FormData();
-    formData.append("uid", user.uid);
-    formData.append("content", newPost);
-
-    images.forEach((img) => {
-      formData.append("images", img);
-    });
-
-    await fetch(`${API}/api/posts`, {
-      method: "POST",
-      body: formData,
-    });
-
-    setNewPost("");
-    setImages([]);
-    setPreviewImages([]);
-
-    fetchPosts();
-  };
-
-  // DELETE POST
   const deletePost = async (id) => {
     await fetch(`${API}/api/posts/${id}`, {
       method: "DELETE",
@@ -68,85 +34,81 @@ const PostsList = () => {
     setPosts(posts.filter((p) => p._id !== id));
   };
 
-  // START EDIT
+  const toggleLike = async (id) => {
+    await fetch(`${API}/api/posts/${id}/like`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid: user.uid }),
+    });
+
+    fetchPosts();
+  };
+
+  const addComment = async (id) => {
+    if (!commentText[id]) return;
+
+    await fetch(`${API}/api/posts/${id}/comment`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        uid: user.uid,
+        text: commentText[id],
+      }),
+    });
+
+    setCommentText({ ...commentText, [id]: "" });
+
+    fetchPosts();
+  };
+
+  const toggleComments = (id) => {
+    setShowComments({
+      ...showComments,
+      [id]: !showComments[id],
+    });
+  };
+
   const startEdit = (post) => {
     setEditingPostId(post._id);
     setEditText(post.content);
   };
 
-  // UPDATE POST
   const updatePost = async (id) => {
-    try {
-      const res = await fetch(`${API}/api/posts/${id}/edit`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: editText,
-        }),
-      });
+    const res = await fetch(`${API}/api/posts/${id}/edit`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: editText }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        console.log("Edit failed:", data);
-        return;
-      }
+    setPosts((prev) =>
+      prev.map((p) => (p._id === id ? data.post : p))
+    );
 
-      // update UI with returned post
-      setPosts((prev) =>
-        prev.map((p) => (p._id === id ? data.post : p))
-      );
-
-      setEditingPostId(null);
-      setEditText("");
-    } catch (error) {
-      console.log(error);
-    }
+    setEditingPostId(null);
   };
 
   return (
     <div className="posts-container">
 
-      <h2>Create Post</h2>
-
-      <textarea
-        placeholder="Write something..."
-        value={newPost}
-        onChange={(e) => setNewPost(e.target.value)}
-      />
-
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={handleImageChange}
-      />
-
-      {/* PREVIEW */}
-      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-        {previewImages.map((img, index) => (
-          <img
-            key={index}
-            src={img}
-            alt="preview"
-            width="120"
-            style={{ borderRadius: "8px" }}
-          />
-        ))}
-      </div>
-
-      <button onClick={createPost}>Post</button>
-
-      <hr />
+      <PostComposer onPostCreated={fetchPosts} />
 
       {posts.map((post) => (
+
         <div key={post._id} className="post-card">
 
-          <h3>{post.userName}</h3>
+          <div className="post-header">
+            <div className="avatar">
+              {post.userName?.charAt(0) || "U"}
+            </div>
 
-          {/* EDIT MODE */}
+            <div>
+              <h4>{post.userName || "User"}</h4>
+              <span className="post-time">Just now</span>
+            </div>
+          </div>
+
           {editingPostId === post._id ? (
             <>
               <textarea
@@ -154,49 +116,73 @@ const PostsList = () => {
                 onChange={(e) => setEditText(e.target.value)}
               />
 
-              <button onClick={() => updatePost(post._id)}>
-                Save
-              </button>
-
-              <button onClick={() => setEditingPostId(null)}>
-                Cancel
-              </button>
+              <button onClick={() => updatePost(post._id)}>Save</button>
+              <button onClick={() => setEditingPostId(null)}>Cancel</button>
             </>
           ) : (
-            <p>{post.content}</p>
+            <p className="post-content">{post.content}</p>
           )}
 
-          {/* MULTIPLE IMAGES */}
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            {post.images &&
-              post.images.map((img, i) => (
+          {post.images?.length > 0 && (
+            <div className="post-images">
+              {post.images.map((img, i) => (
                 <img
                   key={i}
                   src={`${API}/uploads/${img}`}
                   alt="post"
-                  width="200"
-                  style={{ borderRadius: "10px" }}
                 />
               ))}
+            </div>
+          )}
+
+          <div className="post-actions">
+
+            <button onClick={() => toggleLike(post._id)}>
+              ❤️ {post.likes?.length || 0}
+            </button>
+
+            <button onClick={() => toggleComments(post._id)}>
+              💬 {post.comments?.length || 0}
+            </button>
+
+            {post.uid === user.uid && (
+              <>
+                <button onClick={() => startEdit(post)}>✏️</button>
+                <button onClick={() => deletePost(post._id)}>🗑</button>
+              </>
+            )}
+
           </div>
 
-          {/* BUTTONS */}
-          {post.uid === user.uid && (
-            <div style={{ marginTop: "10px" }}>
+          {showComments[post._id] && (
+            <div className="comment-section">
 
-              <button onClick={() => startEdit(post)}>
-                Edit
-              </button>
+              {post.comments?.map((c, i) => (
+                <div key={i} className="comment">{c.text}</div>
+              ))}
 
-              <button
-                onClick={() => deletePost(post._id)}
-                style={{ marginLeft: "10px", color: "red" }}
-              >
-                Delete
-              </button>
+              <div className="comment-input">
+
+                <input
+                  placeholder="Write comment..."
+                  value={commentText[post._id] || ""}
+                  onChange={(e) =>
+                    setCommentText({
+                      ...commentText,
+                      [post._id]: e.target.value,
+                    })
+                  }
+                />
+
+                <button onClick={() => addComment(post._id)}>
+                  Send
+                </button>
+
+              </div>
 
             </div>
           )}
+
         </div>
       ))}
     </div>

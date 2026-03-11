@@ -129,12 +129,9 @@ exports.editPost = async (req, res) => {
     const { postId } = req.params;
     const { content } = req.body;
 
-    console.log("Editing post:", postId);
-    console.log("New content:", content);
-
     const updatedPost = await Post.findByIdAndUpdate(
       postId,
-      { content },
+      { content: content },
       { new: true }
     );
 
@@ -144,13 +141,12 @@ exports.editPost = async (req, res) => {
       });
     }
 
-    res.json({
-      message: "Post updated",
+    res.status(200).json({
+      message: "Post updated successfully",
       post: updatedPost,
     });
 
   } catch (error) {
-    console.log(error);
     res.status(500).json({
       message: "Edit failed",
       error: error.message,

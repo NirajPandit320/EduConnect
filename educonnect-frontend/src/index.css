@@ -675,3 +675,157 @@ body.dark-theme button {
     transform: translateY(0);
   }
 }
+.post-composer {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  max-width: 650px;
+  margin: auto;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.post-composer textarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 16px;
+  outline: none;
+  min-height: 80px;
+}
+
+.preview-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.preview-row img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.composer-toolbar {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.upload-btn {
+  cursor: pointer;
+  background: #f3f3f3;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.post-btn {
+  background: black;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.posts-container{
+max-width:650px;
+margin:auto;
+}
+
+.post-composer{
+background:white;
+padding:16px;
+border-radius:16px;
+box-shadow:0 5px 20px rgba(0,0,0,0.08);
+margin-bottom:20px;
+}
+
+.post-composer textarea{
+width:100%;
+border:none;
+resize:none;
+outline:none;
+font-size:16px;
+}
+
+.preview-row{
+display:flex;
+gap:10px;
+margin-top:10px;
+}
+
+.preview-row img{
+width:80px;
+border-radius:10px;
+}
+
+.composer-toolbar{
+display:flex;
+justify-content:space-between;
+margin-top:10px;
+}
+
+.post-btn{
+background:black;
+color:white;
+padding:6px 14px;
+border:none;
+border-radius:10px;
+}
+
+.post-card{
+background:white;
+padding:16px;
+border-radius:16px;
+margin-top:20px;
+box-shadow:0 5px 20px rgba(0,0,0,0.08);
+}
+
+.post-header{
+display:flex;
+gap:10px;
+align-items:center;
+}
+
+.avatar{
+width:40px;
+height:40px;
+background:#6366f1;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:50%;
+font-weight:bold;
+}
+
+.post-images{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+gap:10px;
+margin-top:10px;
+}
+
+.post-images img{
+width:100%;
+border-radius:10px;
+}
+
+.post-actions{
+display:flex;
+gap:15px;
+margin-top:10px;
+}
+
+.comment{
+background:#f3f3f3;
+padding:8px;
+border-radius:8px;
+margin-top:6px;
+}
+
+.comment-input{
+display:flex;
+gap:10px;
+margin-top:8px;
+}
