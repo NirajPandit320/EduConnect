@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import {  useEffect } from "react";
 import RootPage from "./pages/RootPage";
 import AuthPage from "./pages/AuthPage";
 import { useDispatch, useSelector } from "react-redux";
@@ -54,4 +54,4 @@ function App() {
   return user ? <RootPage /> : <AuthPage />;
 }
 
-export default App;
+export default App; 

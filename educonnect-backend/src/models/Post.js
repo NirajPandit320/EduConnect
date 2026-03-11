@@ -8,11 +8,18 @@ const postSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      
     },
+     images: [
+    {
+      type: String
+    }
+  ],
+
     likes: [
       {
-        type: String, // store uid instead of ObjectId
+        type: String,
+        default: "", // store uid instead of ObjectId
       },
     ],
     comments: [

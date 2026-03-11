@@ -4,29 +4,30 @@ const User = require("../models/User");
 // CREATE POST
 exports.createPost = async (req, res) => {
   try {
-    console.log("Incoming post body:", req.body);
 
     const { uid, content } = req.body;
 
-    if (!uid || !content) {
-      return res.status(400).json({
-        message: "uid and content are required",
-      });
-    }
+    const imageFiles = req.files || [];
+
+    const images = imageFiles.map(file => file.filename);
 
     const newPost = await Post.create({
       uid,
       content,
+      images,
       likes: [],
       comments: [],
     });
 
     res.status(201).json(newPost);
+
   } catch (error) {
+
     res.status(500).json({
       message: "Post creation failed",
       error: error.message,
     });
+
   }
 };
 
@@ -122,4 +123,65 @@ exports.addComment = async (req, res) => {
       error: error.message,
     });
   }
+};
+exports.editPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { content } = req.body;
+
+    console.log("Editing post:", postId);
+    console.log("New content:", content);
+
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { content },
+      { new: true }
+    );
+
+    if (!updatedPost) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
+    res.json({
+      message: "Post updated",
+      post: updatedPost,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Edit failed",
+      error: error.message,
+    });
+  }
+};
+exports.deletePost = async (req, res) => {
+
+  try {
+
+    const { postId } = req.params;
+
+    const deletedPost = await Post.findByIdAndDelete(postId);
+
+    if (!deletedPost) {
+      return res.status(404).json({
+        message: "Post not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Post deleted successfully"
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Delete failed",
+      error: error.message
+    });
+
+  }
+
 };

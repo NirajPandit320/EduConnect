@@ -4,13 +4,19 @@ import { useSelector } from "react-redux";
 const PostsList = () => {
   const { user } = useSelector((state) => state.user);
 
+  const API = "http://localhost:5000";
+
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
-  const [commentText, setCommentText] = useState({});
-  const [visibleComments, setVisibleComments] = useState({});
+
+  const [images, setImages] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]);
+
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editText, setEditText] = useState("");
 
   const fetchPosts = async () => {
-    const res = await fetch("http://localhost:5000/api/posts");
+    const res = await fetch(`${API}/api/posts`);
     const data = await res.json();
     setPosts(data);
   };
@@ -19,121 +25,176 @@ const PostsList = () => {
     fetchPosts();
   }, []);
 
-  const createPost = async () => {
-    if (!newPost.trim()) return;
+  // IMAGE SELECT
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
 
-    await fetch("http://localhost:5000/api/posts", {
+    setImages(files);
+
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setPreviewImages(previews);
+  };
+
+  // CREATE POST
+  const createPost = async () => {
+    if (!newPost && images.length === 0) return;
+
+    const formData = new FormData();
+    formData.append("uid", user.uid);
+    formData.append("content", newPost);
+
+    images.forEach((img) => {
+      formData.append("images", img);
+    });
+
+    await fetch(`${API}/api/posts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        uid: user.uid,
-        content: newPost,
-      }),
+      body: formData,
     });
 
     setNewPost("");
-    fetchPosts();
-  };
-
-  const toggleLike = async (postId) => {
-    await fetch(
-      `http://localhost:5000/api/posts/${postId}/like`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: user.uid }),
-      }
-    );
+    setImages([]);
+    setPreviewImages([]);
 
     fetchPosts();
   };
 
-  const addComment = async (postId) => {
-    if (!commentText[postId]) return;
-
-    await fetch(
-      `http://localhost:5000/api/posts/${postId}/comment`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user.uid,
-          text: commentText[postId],
-        }),
-      }
-    );
-
-    setCommentText({ ...commentText, [postId]: "" });
-    fetchPosts();
-  };
-
-  const toggleCommentsVisibility = (postId) => {
-    setVisibleComments({
-      ...visibleComments,
-      [postId]: !visibleComments[postId],
+  // DELETE POST
+  const deletePost = async (id) => {
+    await fetch(`${API}/api/posts/${id}`, {
+      method: "DELETE",
     });
+
+    setPosts(posts.filter((p) => p._id !== id));
+  };
+
+  // START EDIT
+  const startEdit = (post) => {
+    setEditingPostId(post._id);
+    setEditText(post.content);
+  };
+
+  // UPDATE POST
+  const updatePost = async (id) => {
+    try {
+      const res = await fetch(`${API}/api/posts/${id}/edit`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: editText,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log("Edit failed:", data);
+        return;
+      }
+
+      // update UI with returned post
+      setPosts((prev) =>
+        prev.map((p) => (p._id === id ? data.post : p))
+      );
+
+      setEditingPostId(null);
+      setEditText("");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
     <div className="posts-container">
+
       <h2>Create Post</h2>
 
       <textarea
+        placeholder="Write something..."
         value={newPost}
         onChange={(e) => setNewPost(e.target.value)}
-        placeholder="Write something..."
-        className="post-textarea"
       />
 
-      <button onClick={createPost} className="post-button">
-        Post
-      </button>
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleImageChange}
+      />
+
+      {/* PREVIEW */}
+      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+        {previewImages.map((img, index) => (
+          <img
+            key={index}
+            src={img}
+            alt="preview"
+            width="120"
+            style={{ borderRadius: "8px" }}
+          />
+        ))}
+      </div>
+
+      <button onClick={createPost}>Post</button>
 
       <hr />
 
       {posts.map((post) => (
         <div key={post._id} className="post-card">
+
           <h3>{post.userName}</h3>
-          <p>{post.content}</p>
 
-          <div className="post-actions">
-            <button onClick={() => toggleLike(post._id)}>
-              ❤️ {post.likes.length}
-            </button>
-
-            <button
-              onClick={() => toggleCommentsVisibility(post._id)}
-              style={{ marginLeft: "10px" }}
-            >
-              💬 {post.comments.length}
-            </button>
-          </div>
-
-          {visibleComments[post._id] && (
-            <div className="comments-section">
-              <h4>Comments</h4>
-
-              {post.comments.map((c, index) => (
-                <p key={index} className="comment">
-                  {c.text}
-                </p>
-              ))}
-
-              <input
-                type="text"
-                placeholder="Write comment..."
-                value={commentText[post._id] || ""}
-                onChange={(e) =>
-                  setCommentText({
-                    ...commentText,
-                    [post._id]: e.target.value,
-                  })
-                }
+          {/* EDIT MODE */}
+          {editingPostId === post._id ? (
+            <>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
               />
 
-              <button onClick={() => addComment(post._id)}>
-                Comment
+              <button onClick={() => updatePost(post._id)}>
+                Save
               </button>
+
+              <button onClick={() => setEditingPostId(null)}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <p>{post.content}</p>
+          )}
+
+          {/* MULTIPLE IMAGES */}
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {post.images &&
+              post.images.map((img, i) => (
+                <img
+                  key={i}
+                  src={`${API}/uploads/${img}`}
+                  alt="post"
+                  width="200"
+                  style={{ borderRadius: "10px" }}
+                />
+              ))}
+          </div>
+
+          {/* BUTTONS */}
+          {post.uid === user.uid && (
+            <div style={{ marginTop: "10px" }}>
+
+              <button onClick={() => startEdit(post)}>
+                Edit
+              </button>
+
+              <button
+                onClick={() => deletePost(post._id)}
+                style={{ marginLeft: "10px", color: "red" }}
+              >
+                Delete
+              </button>
+
             </div>
           )}
         </div>
