@@ -35,3 +35,4 @@ educonnect-frontend/.env
 # Common
 *.log
 .DS_Store
+~$*.docx
