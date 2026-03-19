@@ -2,6 +2,8 @@ import { useState } from "react";
 import Sidebar from "../components/dashboard/Sidebar";
 import PostsList from "../components/posts/PostsList";
 import DashboardOverview from "../components/dashboard/DashboardOverview";
+import EventsList from "../components/events/EventsList";
+
 
 const RootPage = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -12,7 +14,7 @@ const RootPage = () => {
       case "posts":
         return <PostsList />;
       case "events":
-        return <h2>Event Registration (Coming Soon)</h2>;
+        return <EventsList />;
       case "quizzes":
         return <h2>Quizzes Module</h2>;
       case "chat":

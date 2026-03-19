@@ -21,3 +21,17 @@ yarn-error.log*
 # Firebase admin keys
 firebaseServiceAccount*.json
 Thumbs.db
+uploads/
+
+# Backend
+educonnect-backend/node_modules/
+educonnect-backend/uploads/
+educonnect-backend/.env
+
+# Frontend
+educonnect-frontend/node_modules/
+educonnect-frontend/.env
+
+# Common
+*.log
+.DS_Store

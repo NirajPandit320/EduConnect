@@ -16,6 +16,7 @@ import { auth } from "../../utils/firebase";
 import { useDispatch } from "react-redux";
 import { clearUser } from "../../store/userSlice";
 
+
 const Sidebar = ({
   setActivePage,
   activePage,

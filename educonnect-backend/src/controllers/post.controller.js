@@ -1,3 +1,4 @@
+//CRUD operations for posts
 const Post = require("../models/Post");
 const User = require("../models/User");
 
@@ -153,6 +154,7 @@ exports.editPost = async (req, res) => {
     });
   }
 };
+//Delete API
 exports.deletePost = async (req, res) => {
 
   try {
