@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../../store/userSlice";
 
+// 🔥 Firestore imports
+import { db } from "../../utils/firebase";
+import { collection, orderBy, query, onSnapshot } from "firebase/firestore";
 
 const Dashboard = () => {
   const { user } = useSelector((state) => state.user);
@@ -10,11 +13,38 @@ const Dashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // 🔥 SCORE STATE
+  const [scores, setScores] = useState([]);
+  const [totalScore, setTotalScore] = useState(0); // ✅ NEW
+
   const [formData, setFormData] = useState({
     name: user?.name || "",
     branch: user?.branch || "",
     year: user?.year || "",
   });
+
+  // 🔥 REAL-TIME FETCH (FIXED)
+  useEffect(() => {
+    const q = query(
+      collection(db, "scores"),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setScores(data);
+
+      // ✅ calculate total score
+      const total = data.reduce((acc, item) => acc + (item.score || 0), 0);
+      setTotalScore(total);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -54,6 +84,8 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-card">
+
+      {/* 👤 PROFILE SECTION */}
       <h2 className="dashboard-title">
         Welcome back, <span>{user?.name || "User"}</span>
       </h2>
@@ -120,6 +152,29 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* 🔥 TOTAL SCORE (you can connect this to your top card) */}
+      <div style={{ marginTop: "20px", fontWeight: "bold" }}>
+        Total Quiz Score: {totalScore}
+      </div>
+
+      {/* 📊 QUIZ HISTORY SECTION */}
+      <div className="history-card" style={{ marginTop: "30px" }}>
+        <h2>📊 Quiz History</h2>
+
+        {scores.length === 0 ? (
+          <p>No attempts yet</p>
+        ) : (
+          scores.map((item) => (
+            <div key={item.id} className="score-item">
+              <p>
+                Score: {item.score} / {item.totalQuestions}
+              </p>
+              <p>Percentage: {item.percentage}%</p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };

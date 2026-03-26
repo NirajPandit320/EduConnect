@@ -3,6 +3,7 @@ import Sidebar from "../components/dashboard/Sidebar";
 import PostsList from "../components/posts/PostsList";
 import DashboardOverview from "../components/dashboard/DashboardOverview";
 import EventsList from "../components/events/EventsList";
+import Quiz from "../components/quizzes/Quiz";
 
 
 const RootPage = () => {
@@ -16,7 +17,7 @@ const RootPage = () => {
       case "events":
         return <EventsList />;
       case "quizzes":
-        return <h2>Quizzes Module</h2>;
+        return <Quiz />;
       case "chat":
         return <h2>Chat System</h2>;
       case "audio":
