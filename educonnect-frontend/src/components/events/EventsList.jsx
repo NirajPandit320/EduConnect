@@ -82,82 +82,83 @@ const EventsList = () => {
 
       <CreateEvent onCreated={fetchEvents} />
 
-      <h2>🎉 Events</h2>
+      <h2 className="events-title">🎉 Events & Gatherings</h2>
 
-      {events
-        .filter((event) => !hiddenEvents.includes(event._id))
-        .map((event) => {
-          const isJoined =
-            event.participants?.includes(user.uid);
+      <div className="events-grid">
+        {events
+          .filter((event) => !hiddenEvents.includes(event._id))
+          .map((event) => {
+            const isJoined =
+              event.participants?.includes(user.uid);
 
-          return (
-            <div
-              key={event._id}
-              className={`event-card ${
-                removingId === event._id ? "removing" : ""
-              }`}
-            >
-
-              {/* 🔧 UPDATED: added image fallback safety */}
-              {event.image && event.image !== "" && ( // 🔧 ADDED condition
-                <img
-                  src={`${API}/uploads/${event.image}`}
-                  alt="event"
-                  className="event-banner"
-                  onError={(e) => { // 🔧 ADDED fallback
-                    e.target.style.display = "none";
-                  }}
-                />
-              )}
-
-              <h3>{event.title}</h3>
-
-              <p>{event.description}</p>
-
-              <div className="event-meta">
-                <span>
-                  📅 {new Date(event.date).toLocaleDateString()}
-                </span>
-                <span>📍 {event.location}</span>
-              </div>
-
-              <p
-                className="participants clickable"
-                onClick={() => setSelectedEvent(event)}
+            return (
+              <div
+                key={event._id}
+                className={`event-card-wrapper ${
+                  removingId === event._id ? "removing" : ""
+                }`}
               >
-                👥 {event.participants?.length || 0} joined
-              </p>
+                <div className="event-card">
 
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button
-                  className={isJoined ? "joined-btn" : "join-btn"}
-                  onClick={() => joinEvent(event._id)}
-                  disabled={isJoined}
-                >
-                  {/* 🔧 FIXED text consistency */}
-                  {isJoined ? "Joined ✅" : "Join Event"} 
-                </button>
+                  {event.image && event.image !== "" && (
+                    <img
+                      src={`${API}/uploads/${event.image}`}
+                      alt="event"
+                      className="event-banner"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  )}
 
-                <button
-                  className="hide-btn"
-                  onClick={() => hideEvent(event)}
-                >
-                  ❌ Not Interested
-                </button>
+                  <div className="event-content">
+                    <h3 className="event-title">{event.title}</h3>
 
-                {/* 🔧 UPDATED: better UX label */}
-                <button 
-                    className="join-btn"
-                  onClick={() => setChatEventId(event._id)}
-                >
-                  💬 Chat
-                </button>
+                    <p className="event-description">{event.description}</p>
 
+                    <div className="event-meta">
+                      <span className="meta-item">
+                        📅 {new Date(event.date).toLocaleDateString()}
+                      </span>
+                      <span className="meta-item">📍 {event.location}</span>
+                    </div>
+
+                    <p
+                      className="participants-count"
+                      onClick={() => setSelectedEvent(event)}
+                    >
+                      👥 <strong>{event.participants?.length || 0}</strong> joined
+                    </p>
+
+                    <div className="event-actions">
+                      <button
+                        className={`event-btn ${isJoined ? "joined" : "join"}`}
+                        onClick={() => joinEvent(event._id)}
+                        disabled={isJoined}
+                      >
+                        {isJoined ? "✅ Joined" : "Join Event"}
+                      </button>
+
+                      <button
+                        className="event-btn chat"
+                        onClick={() => setChatEventId(event._id)}
+                      >
+                        💬 Chat
+                      </button>
+
+                      <button
+                        className="event-btn not-interested"
+                        onClick={() => hideEvent(event)}
+                      >
+                        ❌
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-            </div>
-          );
-        })}
+            );
+          })}
+      </div>
 
       {/* PARTICIPANTS MODAL */}
       {selectedEvent && (
@@ -167,15 +168,15 @@ const EventsList = () => {
         />
       )}
 
-      {/* 🔧 ADDED: CHAT UI rendering */}
-      {chatEventId && ( // 🔧 THIS WAS MISSING IN YOUR CODE
+      {/* CHAT UI */}
+      {chatEventId && (
         <EventChat eventId={chatEventId} />
       )}
 
       {/* UNDO TOAST */}
       {lastHidden && (
         <div className="undo-toast">
-          Event hidden
+          <span>📛 Event hidden</span>
           <button onClick={undoHide}>Undo</button>
         </div>
       )}

@@ -44,25 +44,31 @@ const Sidebar = ({
   return (
     <div className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
       <div className="sidebar-top">
-        <FaBars
+        <button
           className="collapse-btn"
           onClick={() => setIsCollapsed(!isCollapsed)}
-        />
-        {!isCollapsed && <h2 className="logo">EduConnect</h2>}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <FaBars />
+        </button>
+        {!isCollapsed && <h2 className="logo">📚 EduConnect</h2>}
       </div>
 
-      {menuItems.map((item) => (
-        <button
-          key={item.key}
-          className={activePage === item.key ? "active" : ""}
-          onClick={() => setActivePage(item.key)}
-        >
-          {item.icon}
-          {!isCollapsed && item.label}
-        </button>
-      ))}
+      <nav className="sidebar-menu">
+        {menuItems.map((item) => (
+          <button
+            key={item.key}
+            className={`menu-item ${activePage === item.key ? "active" : ""}`}
+            onClick={() => setActivePage(item.key)}
+            title={item.label}
+          >
+            <span className="menu-icon">{item.icon}</span>
+            {!isCollapsed && <span className="menu-label">{item.label}</span>}
+          </button>
+        ))}
+      </nav>
 
-      <button className="logout-btn" onClick={handleLogout}>
+      <button className="logout-btn" onClick={handleLogout} title="Logout">
         <FaSignOutAlt />
         {!isCollapsed && "Logout"}
       </button>

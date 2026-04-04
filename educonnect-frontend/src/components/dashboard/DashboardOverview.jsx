@@ -108,7 +108,6 @@ const DashboardOverview = () => {
 
       return () => clearInterval(timer);
     }, [value]);
-    console.log("QUIZ SCORE:", quizScore);
 
     return <span>{display}</span>;
   };
@@ -118,53 +117,89 @@ const DashboardOverview = () => {
 
       {/* DARK MODE */}
       <div className="toggle-container">
-        <button onClick={() => setDarkMode(!darkMode)}>
-          {darkMode ? "Light Mode" : "Dark Mode"}
+        <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+          <span className="toggle-icon">{darkMode ? "☀️" : "🌙"}</span>
+          <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
         </button>
       </div>
 
+      {/* HERO SECTION */}
+      <div className="hero-card">
+        <h1>Welcome back, <span>{user?.name || "User"}</span>!</h1>
+        <p className="hero-date">Here's your performance overview</p>
+      </div>
+
       {/* STATS */}
-      <div className="stats-row">
+      <div className="stats-grid">
 
-        <div className="stat-card">
-          <h3><AnimatedNumber value={stats?.totalPosts} /></h3>
-          <p>Total Posts</p>
+        <div className="stat-card stat-posts">
+          <div className="stat-icon">📝</div>
+          <div className="stat-content">
+            <h3><AnimatedNumber value={stats?.totalPosts} /></h3>
+            <p>Total Posts</p>
+          </div>
         </div>
 
-        <div className="stat-card">
-          <h3>{stats?.totalLikes || 0}</h3>
-          <p>Total Likes</p>
+        <div className="stat-card stat-likes">
+          <div className="stat-icon">❤️</div>
+          <div className="stat-content">
+            <h3><AnimatedNumber value={stats?.totalLikes} /></h3>
+            <p>Total Likes</p>
+          </div>
         </div>
 
-        <div className="stat-card">
-          <h3>{stats?.totalComments || 0}</h3>
-          <p>Total Comments</p>
+        <div className="stat-card stat-comments">
+          <div className="stat-icon">💬</div>
+          <div className="stat-content">
+            <h3><AnimatedNumber value={stats?.totalComments} /></h3>
+            <p>Total Comments</p>
+          </div>
         </div>
 
-        {/* ADDED: QUIZ SCORE CARD */}
-        <div className="stat-card">
-          <h3>{quizScore}</h3>
-          <p>Total Quiz Score</p>
+        <div className="stat-card stat-quiz">
+          <div className="stat-icon">🎯</div>
+          <div className="stat-content">
+            <h3><AnimatedNumber value={quizScore} /></h3>
+            <p>Quiz Score</p>
+          </div>
         </div>
 
       </div>
 
       {/* CHART */}
       <div className="chart-card">
-        <ResponsiveContainer width="100%" height={300}>
+        <h3 className="chart-title">📊 Activity Overview</h3>
+        <ResponsiveContainer width="100%" height={320}>
           <LineChart data={chartData}>
-            <Line type="monotone" dataKey="value" stroke="#8b5cf6" />
-            <CartesianGrid stroke="#ccc" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
+            <CartesianGrid stroke="#e5e7eb" strokeDasharray="5 5" />
+            <XAxis dataKey="name" stroke="#6b7280" />
+            <YAxis stroke="#6b7280" />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1f2937",
+                border: "none",
+                borderRadius: "8px",
+                color: "#fff"
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#667eea"
+              strokeWidth={3}
+              dot={{ fill: "#667eea", r: 6 }}
+              activeDot={{ r: 8 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* PROFILE */}
+      {/* PROFILE COMPLETION */}
       <div className="profile-completion">
-        <h3>Profile Completion</h3>
+        <div className="profile-header">
+          <h3>📌 Profile Completion</h3>
+          <span className="completion-percentage">{profileCompletion}%</span>
+        </div>
 
         <div className="progress-bar">
           <div
@@ -173,17 +208,30 @@ const DashboardOverview = () => {
           />
         </div>
 
-        <p>{profileCompletion}% Complete</p>
+        <p className="completion-text">
+          {profileCompletion === 100
+            ? "✅ Profile is complete!"
+            : "📝 Add your branch and year to complete your profile"}
+        </p>
       </div>
 
       {/* ACTIVITY */}
       <div className="activity-section">
-        <h3>Recent Activity</h3>
-        <ul>
-          <li>Created a post</li>
-          <li>Liked a post</li>
-          <li>Updated profile</li>
-        </ul>
+        <h3>⚡ Recent Activity</h3>
+        <div className="activity-list">
+          <div className="activity-item">
+            <span className="activity-dot"></span>
+            <span className="activity-text">Created a post</span>
+          </div>
+          <div className="activity-item">
+            <span className="activity-dot"></span>
+            <span className="activity-text">Liked a post</span>
+          </div>
+          <div className="activity-item">
+            <span className="activity-dot"></span>
+            <span className="activity-text">Updated profile</span>
+          </div>
+        </div>
       </div>
 
     </div>

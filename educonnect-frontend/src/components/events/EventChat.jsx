@@ -38,28 +38,40 @@ const EventChat = ({ eventId }) => {
   };
 
   return (
-    <div className="chat-box">
+    <div className="event-chat-modal">
+      <div className="chat-container">
+        <div className="chat-header">
+          <h3>💬 Event Chat</h3>
+          <button className="close-chat" onClick={() => {}} title="Close chat">✕</button>
+        </div>
 
-      <h3>💬 Event Chat</h3>
+        <div className="messages-container">
+          {messages.length === 0 ? (
+            <p className="no-messages">No messages yet. Start the conversation!</p>
+          ) : (
+            messages.map((msg, i) => (
+              <div key={i} className="message-bubble">
+                <div className="message-author">{msg.user}</div>
+                <div className="message-text">{msg.text}</div>
+              </div>
+            ))
+          )}
+        </div>
 
-      <div className="messages">
-        {messages.map((msg, i) => (
-          <div key={i} className="message">
-            <strong>{msg.user}:</strong> {msg.text}
-          </div>
-        ))}
+        <div className="chat-input-area">
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            placeholder="Type message..."
+            className="message-input"
+          />
+          <button onClick={sendMessage} className="send-btn">
+            Send
+          </button>
+        </div>
       </div>
-
-      <div className="chat-input">
-        <input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type message..."
-        />
-
-        <button onClick={sendMessage}>Send</button>
-      </div>
-
     </div>
   );
 };

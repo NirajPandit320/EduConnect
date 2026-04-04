@@ -94,97 +94,168 @@ const PostsList = () => {
 
       <PostComposer onPostCreated={fetchPosts} />
 
-      {posts.map((post) => (
+      {posts.length === 0 ? (
+        <div className="empty-posts">
+          <div className="empty-icon">📝</div>
+          <h3>No posts yet</h3>
+          <p>Be the first to share something!</p>
+        </div>
+      ) : (
+        <div className="posts-feed">
+          {posts.map((post) => (
 
-        <div key={post._id} className="post-card">
+            <div key={post._id} className="post-card">
 
-          <div className="post-header">
-            <div className="avatar">
-              {post.userName?.charAt(0) || "U"}
-            </div>
+              {/* POST HEADER */}
+              <div className="post-header">
+                <div className="post-user">
+                  <div className="post-avatar">
+                    {post.userName?.charAt(0) || "U"}
+                  </div>
+                  <div className="post-user-info">
+                    <h4 className="post-author">{post.userName || "User"}</h4>
+                    <span className="post-time">Just now</span>
+                  </div>
+                </div>
 
-            <div>
-              <h4>{post.userName || "User"}</h4>
-              <span className="post-time">Just now</span>
-            </div>
-          </div>
-
-          {editingPostId === post._id ? (
-            <>
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-              />
-
-              <button onClick={() => updatePost(post._id)}>Save</button>
-              <button onClick={() => setEditingPostId(null)}>Cancel</button>
-            </>
-          ) : (
-            <p className="post-content">{post.content}</p>
-          )}
-
-          {post.images?.length > 0 && (
-            <div className="post-images">
-              {post.images.map((img, i) => (
-                <img
-                  key={i}
-                  src={`${API}/uploads/${img}`}
-                  alt="post"
-                />
-              ))}
-            </div>
-          )}
-
-          <div className="post-actions">
-
-            <button onClick={() => toggleLike(post._id)}>
-              ❤️ {post.likes?.length || 0}
-            </button>
-
-            <button onClick={() => toggleComments(post._id)}>
-              💬 {post.comments?.length || 0}
-            </button>
-
-            {post.uid === user.uid && (
-              <>
-                <button onClick={() => startEdit(post)}>✏️</button>
-                <button onClick={() => deletePost(post._id)}>🗑</button>
-              </>
-            )}
-
-          </div>
-
-          {showComments[post._id] && (
-            <div className="comment-section">
-
-              {post.comments?.map((c, i) => (
-                <div key={i} className="comment">{c.text}</div>
-              ))}
-
-              <div className="comment-input">
-
-                <input
-                  placeholder="Write comment..."
-                  value={commentText[post._id] || ""}
-                  onChange={(e) =>
-                    setCommentText({
-                      ...commentText,
-                      [post._id]: e.target.value,
-                    })
-                  }
-                />
-
-                <button onClick={() => addComment(post._id)}>
-                  Send
-                </button>
-
+                {post.uid === user.uid && (
+                  <div className="post-menu">
+                    <button
+                      className="post-icon-btn edit"
+                      onClick={() => startEdit(post)}
+                      title="Edit post"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      className="post-icon-btn delete"
+                      onClick={() => deletePost(post._id)}
+                      title="Delete post"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
               </div>
 
-            </div>
-          )}
+              {/* POST CONTENT */}
+              {editingPostId === post._id ? (
+                <div className="edit-mode">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="edit-textarea"
+                  />
+                  <div className="edit-actions">
+                    <button onClick={() => updatePost(post._id)} className="save-btn">
+                      ✅ Save
+                    </button>
+                    <button onClick={() => setEditingPostId(null)} className="cancel-btn">
+                      ❌ Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="post-content">{post.content}</p>
+              )}
 
+              {/* POST IMAGES */}
+              {post.images?.length > 0 && (
+                <div className="post-images-container">
+                  <div className={`post-images grid-${Math.min(post.images.length, 3)}`}>
+                    {post.images.map((img, i) => (
+                      <img
+                        key={i}
+                        src={`${API}/uploads/${img}`}
+                        alt="post"
+                        className="post-image"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* POST ACTIONS */}
+              <div className="post-actions-container">
+                <div className="post-stats">
+                  <span className="stat">
+                    <strong>{post.likes?.length || 0}</strong> likes
+                  </span>
+                  <span className="stat">
+                    <strong>{post.comments?.length || 0}</strong> comments
+                  </span>
+                </div>
+
+                <div className="post-actions">
+                  <button
+                    className={`action-btn ${post.likes?.includes(user.uid) ? 'liked' : ''}`}
+                    onClick={() => toggleLike(post._id)}
+                  >
+                    <span className="action-icon">❤️</span>
+                    <span className="action-label">Like</span>
+                  </button>
+
+                  <button
+                    className={`action-btn ${showComments[post._id] ? 'active' : ''}`}
+                    onClick={() => toggleComments(post._id)}
+                  >
+                    <span className="action-icon">💬</span>
+                    <span className="action-label">Comment</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* COMMENTS SECTION */}
+              {showComments[post._id] && (
+                <div className="comment-section">
+                  <div className="comments-divider"></div>
+
+                  <div className="comments-list">
+                    {post.comments?.length === 0 ? (
+                      <p className="no-comments">No comments yet. Be the first!</p>
+                    ) : (
+                      post.comments?.map((c, i) => (
+                        <div key={i} className="comment">
+                          <div className="comment-avatar">
+                            {c.name?.charAt(0) || "U"}
+                          </div>
+                          <div className="comment-content">
+                            <p className="comment-name">{c.name || "User"}</p>
+                            <p className="comment-text">{c.text}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="comment-input">
+                    <input
+                      placeholder="Write a comment..."
+                      value={commentText[post._id] || ""}
+                      onChange={(e) =>
+                        setCommentText({
+                          ...commentText,
+                          [post._id]: e.target.value,
+                        })
+                      }
+                      className="comment-field"
+                    />
+
+                    <button
+                      onClick={() => addComment(post._id)}
+                      className="comment-submit"
+                      disabled={!commentText[post._id]?.trim()}
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 };

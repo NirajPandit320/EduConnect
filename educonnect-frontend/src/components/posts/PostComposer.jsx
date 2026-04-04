@@ -40,39 +40,66 @@ const PostComposer = ({ onPostCreated }) => {
   };
 
   return (
-    <div className="post-composer">
+    <div className="composer-wrapper">
+      <div className="post-composer">
 
-      <textarea
-        placeholder="Share something with your classmates..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-      />
-
-      {previewImages.length > 0 && (
-        <div className="preview-row">
-          {previewImages.map((img, i) => (
-            <img key={i} src={img} alt="preview" />
-          ))}
+        <div className="composer-header">
+          <div className="composer-user">
+            <div className="composer-avatar">
+              {user?.name?.charAt(0) || "U"}
+            </div>
+            <div className="composer-user-info">
+              <p className="composer-name">{user?.name || "User"}</p>
+              <span className="composer-status">Share your thoughts...</span>
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="composer-toolbar">
+        <textarea
+          placeholder="What's on your mind? 💭"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="composer-textarea"
+        />
 
-        <label className="upload-btn">
-          📷 Image
-          <input
-            type="file"
-            multiple
-            hidden
-            accept="image/*"
-            onChange={handleImageChange}
-          />
-        </label>
+        {previewImages.length > 0 && (
+          <div className="preview-row">
+            <div className="preview-title">📸 Images ({previewImages.length})</div>
+            <div className="preview-items">
+              {previewImages.map((img, i) => (
+                <div key={i} className="preview-item">
+                  <img src={img} alt="preview" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <button className="post-btn" onClick={createPost}>
-          Post
-        </button>
+        <div className="composer-toolbar">
+          <label className="upload-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            Add Image
+            <input
+              type="file"
+              multiple
+              hidden
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+          </label>
 
+          <button
+            className="post-btn"
+            onClick={createPost}
+            disabled={!content && previewImages.length === 0}
+          >
+            <span className="post-btn-icon">✨</span>
+            <span className="post-btn-text">Post</span>
+          </button>
+        </div>
       </div>
     </div>
   );

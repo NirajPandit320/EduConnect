@@ -50,54 +50,81 @@ const CreateEvent = ({ onCreated }) => {
 };
 
   return (
-    <div className="event-form">
+    <div className="event-form-container">
+      <div className="event-form">
 
-      <h3>Create Event</h3>
+        <h3 className="form-title">✨ Create New Event</h3>
 
-      <input
-        name="title"
-        placeholder="Event title"
-        value={form.title}
-        onChange={handleChange}
-      />
+        <div className="form-group">
+          <label>Event Title</label>
+          <input
+            name="title"
+            placeholder="Enter event title..."
+            value={form.title}
+            onChange={handleChange}
+            className="form-input"
+          />
+        </div>
 
-      <input
-        name="description"
-        placeholder="Description"
-        value={form.description}
-        onChange={handleChange}
-      />
+        <div className="form-group">
+          <label>Description</label>
+          <textarea
+            name="description"
+            placeholder="Describe your event..."
+            value={form.description}
+            onChange={handleChange}
+            className="form-textarea"
+            rows={3}
+          />
+        </div>
 
-      <input
-        type="date"
-        name="date"
-        value={form.date}
-        onChange={handleChange}
-      />
+        <div className="form-row">
+          <div className="form-group">
+            <label>Date</label>
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              className="form-input"
+            />
+          </div>
 
-      <input
-        name="location"
-        placeholder="Location"
-        value={form.location}
-        onChange={handleChange}
-      />
+          <div className="form-group">
+            <label>Location</label>
+            <input
+              name="location"
+              placeholder="Event location..."
+              value={form.location}
+              onChange={handleChange}
+              className="form-input"
+            />
+          </div>
+        </div>
 
-      {/* IMAGE UPLOAD */}
-      <input type="file" accept="image/*" onChange={handleImage} />
+        <div className="form-group">
+          <label className="upload-label">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImage}
+              hidden
+            />
+            📸 Upload Event Banner
+          </label>
+        </div>
 
-      {/* PREVIEW */}
-      {preview && (
-        <img
-          src={preview}
-          alt="preview"
-          className="event-preview"
-        />
-      )}
+        {preview && (
+          <div className="preview-container">
+            <img src={preview} alt="preview" className="event-preview" />
+          </div>
+        )}
 
-      <button onClick={createEvent}>
-        Create Event
-      </button>
+        <button onClick={createEvent} className="create-event-btn">
+          🚀 Create Event
+        </button>
 
+      </div>
     </div>
   );
 };

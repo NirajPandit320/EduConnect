@@ -25,22 +25,34 @@ const ParticipantsModal = ({ event, onClose }) => {
   }, [event]);
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={onClose}>
 
-      <div className="modal">
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
 
-        <h3>Participants</h3>
+        <div className="modal-header">
+          <h3>👥 Participants ({users.length})</h3>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
 
-        {users.map((u) => (
-          <div key={u.uid} className="participant">
-            <div className="avatar">
-              {u.name?.charAt(0) || "U"}
-            </div>
-            <span>{u.name || u.email}</span>
-          </div>
-        ))}
+        <div className="participants-list">
+          {users.length === 0 ? (
+            <p className="empty-state">No participants yet</p>
+          ) : (
+            users.map((u) => (
+              <div key={u.uid} className="participant-item">
+                <div className="participant-avatar">
+                  {u.name?.charAt(0) || "U"}
+                </div>
+                <div className="participant-info">
+                  <p className="participant-name">{u.name || u.email}</p>
+                  <p className="participant-email">{u.email}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
-        <button onClick={onClose}>Close</button>
+        <button className="modal-close-btn" onClick={onClose}>Close</button>
 
       </div>
     </div>
