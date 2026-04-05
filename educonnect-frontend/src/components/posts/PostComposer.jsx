@@ -27,16 +27,25 @@ const PostComposer = ({ onPostCreated }) => {
       formData.append("images", img);
     });
 
-    await fetch(`${API}/api/posts`, {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch(`${API}/api/posts`, {
+        method: "POST",
+        body: formData,
+      });
 
-    setContent("");
-    setImages([]);
-    setPreviewImages([]);
+      if (response.ok) {
+        setContent("");
+        setImages([]);
+        setPreviewImages([]);
 
-    onPostCreated();
+        onPostCreated();
+
+        // ADDED: Emit event to trigger dashboard stats refresh
+        window.dispatchEvent(new Event("stats-refresh"));
+      }
+    } catch (error) {
+      console.error("Error creating post:", error);
+    }
   };
 
   return (

@@ -15,7 +15,7 @@ const Dashboard = () => {
 
   // 🔥 SCORE STATE
   const [scores, setScores] = useState([]);
-  const [totalScore, setTotalScore] = useState(0); // ✅ NEW
+  const [totalScore, setTotalScore] = useState(0); //  NEW
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -38,7 +38,7 @@ const Dashboard = () => {
 
       setScores(data);
 
-      // ✅ calculate total score
+      //  calculate total score
       const total = data.reduce((acc, item) => acc + (item.score || 0), 0);
       setTotalScore(total);
     });

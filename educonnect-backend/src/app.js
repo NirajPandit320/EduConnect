@@ -6,6 +6,7 @@ const userRoutes = require("./routes/user.routes");
 const postRoutes = require("./routes/post.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const eventRoutes = require("./routes/event.routes");
+const messageRoutes = require("./routes/message.routes");
 
 app.use(cors());
 app.use(express.json());
@@ -17,6 +18,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/api/messages", messageRoutes);
 
 
 app.get("/", (req, res) => {

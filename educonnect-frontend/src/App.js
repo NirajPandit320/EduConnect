@@ -1,4 +1,4 @@
-import {  useEffect } from "react";
+import { useEffect } from "react";
 import RootPage from "./pages/RootPage";
 import AuthPage from "./pages/AuthPage";
 import { useDispatch, useSelector } from "react-redux";
@@ -20,25 +20,49 @@ function App() {
       }
 
       try {
-        const response = await fetch(
+        //  Step 1: Try to fetch user
+        let response = await fetch(
           `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
         );
 
-        if (response.ok) {
-          const data = await response.json();
-          dispatch(setUser(data.user)); // full Mongo profile
-        } else {
-          // If backend profile not found, still login with Firebase data
-          dispatch(
-            setUser({
+        //  Step 2: If NOT found → create user
+        if (!response.ok) {
+          console.log("User not found → creating...");
+
+          const createRes = await fetch("http://localhost:5000/api/users", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
               uid: firebaseUser.uid,
+              name:
+                firebaseUser.displayName ||
+                firebaseUser.email?.split("@")[0] ||
+                "User",
               email: firebaseUser.email,
-            })
+            }),
+          });
+
+          const createData = await createRes.json();
+          console.log("Create user response:", createData);
+
+          //  Step 3: Fetch again after creating
+          response = await fetch(
+            `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
           );
         }
-      } catch (error) {
-        console.log("Backend fetch failed, using Firebase only");
 
+        //  Step 4: Final user fetch
+        const data = await response.json();
+        console.log("Final user data:", data);
+
+        dispatch(setUser(data.user));
+
+      } catch (error) {
+        console.error("Backend error:", error);
+
+        //  Step 5: Fallback (still allow login)
         dispatch(
           setUser({
             uid: firebaseUser.uid,
@@ -54,4 +78,4 @@ function App() {
   return user ? <RootPage /> : <AuthPage />;
 }
 
-export default App; 
+export default App;

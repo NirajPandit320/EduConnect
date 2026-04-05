@@ -4,11 +4,13 @@ import PostsList from "../components/posts/PostsList";
 import DashboardOverview from "../components/dashboard/DashboardOverview";
 import EventsList from "../components/events/EventsList";
 import Quiz from "../components/quizzes/Quiz";
+import ChatPage from "../components/chat/ChatPage";
 
 
 const RootPage = () => {
   const [activePage, setActivePage] = useState("dashboard");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  
 
   const renderContent = () => {
     switch (activePage) {
@@ -19,7 +21,7 @@ const RootPage = () => {
       case "quizzes":
         return <Quiz />;
       case "chat":
-        return <h2>Chat System</h2>;
+        return <ChatPage />;
       case "audio":
         return <h2>Audio Call Feature</h2>;
       case "video":

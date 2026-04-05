@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -32,6 +33,9 @@ const DashboardOverview = () => {
   // ADDED: quiz score
   const [quizScore, setQuizScore] = useState(0);
 
+  // ADDED: Refresh trigger for real-time updates
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   // DARK MODE
   useEffect(() => {
     if (darkMode) {
@@ -43,14 +47,44 @@ const DashboardOverview = () => {
     }
   }, [darkMode]);
 
-  // FETCH DASHBOARD STATS
-  useEffect(() => {
+  // ADDED: Function to fetch dashboard stats
+  const fetchDashboardStats = useCallback(() => {
     if (!user?.uid) return;
 
     fetch(`http://localhost:5000/api/dashboard/${user.uid}`)
       .then((res) => res.json())
-      .then((data) => setStats(data));
+      .then((data) => setStats(data))
+      .catch((error) => console.error("Error fetching stats:", error));
   }, [user]);
+
+  // FETCH DASHBOARD STATS - Initial load and on user change
+  useEffect(() => {
+    fetchDashboardStats();
+  }, [user, fetchDashboardStats]);
+
+  // ADDED: Listen for stats-refresh events (triggered when posts are created)
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchDashboardStats();
+    };
+
+    window.addEventListener("stats-refresh", handleRefresh);
+    return () => window.removeEventListener("stats-refresh", handleRefresh);
+  }, [fetchDashboardStats]);
+
+  // ADDED: Periodic refresh every 15 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshTrigger((prev) => prev + 1);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ADDED: Trigger fetch on refresh interval
+  useEffect(() => {
+    fetchDashboardStats();
+  }, [refreshTrigger, fetchDashboardStats]);
 
   // ADDED: FETCH QUIZ SCORE FROM FIRESTORE
   useEffect(() => {
@@ -170,27 +204,43 @@ const DashboardOverview = () => {
       <div className="chart-card">
         <h3 className="chart-title">📊 Activity Overview</h3>
         <ResponsiveContainer width="100%" height={320}>
-          <LineChart data={chartData}>
+          <BarChart
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+          >
             <CartesianGrid stroke="#e5e7eb" strokeDasharray="5 5" />
-            <XAxis dataKey="name" stroke="#6b7280" />
-            <YAxis stroke="#6b7280" />
+            <XAxis 
+              dataKey="name" 
+              stroke="#6b7280"
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+            />
+            <YAxis 
+              stroke="#6b7280"
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+            />
             <Tooltip
               contentStyle={{
                 backgroundColor: "#1f2937",
-                border: "none",
+                border: "2px solid #667eea",
                 borderRadius: "8px",
-                color: "#fff"
+                color: "#fff",
+                padding: "10px",
               }}
+              cursor={{ fill: "rgba(102, 126, 234, 0.1)" }}
+              formatter={(value) => [value, "Count"]}
             />
-            <Line
-              type="monotone"
+            <Legend 
+              wrapperStyle={{ paddingTop: "20px" }}
+              iconType="square"
+            />
+            <Bar
               dataKey="value"
-              stroke="#667eea"
-              strokeWidth={3}
-              dot={{ fill: "#667eea", r: 6 }}
-              activeDot={{ r: 8 }}
+              fill="#667eea"
+              radius={[8, 8, 0, 0]}
+              animationDuration={800}
+              name="Metrics"
             />
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       </div>
 
