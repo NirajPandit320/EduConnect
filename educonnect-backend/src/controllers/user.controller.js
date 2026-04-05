@@ -1,8 +1,7 @@
 const User = require("../models/User");
 
-// =========================
 // CREATE USER PROFILE
-// =========================
+
 exports.createUserProfile = async (req, res) => {
   try {
     const { uid, name, email, sapId, branch, year, role } = req.body;
@@ -60,9 +59,8 @@ exports.createUserProfile = async (req, res) => {
   }
 };
 
-// =========================
 // GET USER BY UID
-// =========================
+
 exports.getUserByUid = async (req, res) => {
   try {
     const { uid } = req.params;
@@ -88,16 +86,15 @@ exports.getUserByUid = async (req, res) => {
   }
 };
 
-// =========================
 // GET ALL USERS
-// =========================
+
 exports.getAllUsers = async (req, res) => {
   try {
-    const { online } = req.query; // ✅ NEW: filter support (non-breaking)
+    const { online } = req.query; //  NEW: filter support (non-breaking)
 
     let filter = {};
 
-    // ✅ OPTIONAL FILTER
+    //  OPTIONAL FILTER
     if (online === "true") {
       filter.isOnline = true;
     }
@@ -114,9 +111,8 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// =========================
 // UPDATE ONLINE STATUS (OPTIONAL API)
-// =========================
+
 exports.updateOnlineStatus = async (req, res) => {
   try {
     const { uid, isOnline } = req.body;

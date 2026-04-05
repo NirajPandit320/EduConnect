@@ -7,14 +7,14 @@ exports.createEvent = async (req, res) => {
   try {
     const { title, description, date, location, uid } = req.body;
 
-    // ✅ Validation
+    //  Validation
     if (!title || !date || !uid) {
       return res.status(400).json({
         message: "Title, date and uid are required",
       });
     }
 
-    // ✅ Parse date
+    //  Parse date
     const parsedDate = new Date(date);
 
     if (isNaN(parsedDate)) {
@@ -23,17 +23,17 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // ✅ Debug (temporary)
+    // Debug (temporary)
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
     const newEvent = new Event({
       title,
       description,
-      date: parsedDate, // ✅ FIXED
+      date: parsedDate, //  Parse date
       location,
       createdBy: uid,
-      image: req.file ? req.file.filename : "", // ✅ correct
+      image: req.file ? req.file.filename : "", //  Correctly handle file upload (if using multer) - ensure multer is set up to handle 'image' field in the route, and that it saves the file with a filename property.
       // participants will auto default if model set
     });
 

@@ -16,6 +16,12 @@ const messageSchema = new mongoose.Schema(
     file: {
       type: String, // file URL (future use)
     },
+    fileName: {
+      type: String,
+    },
+    fileType: {
+      type: String,
+    },
     seen: {
       type: Boolean,
       default: false,

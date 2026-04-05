@@ -4,7 +4,7 @@ const Message = require("../models/Message");
 
 exports.sendMessage = async (req, res) => {
   try {
-    const { sender, receiver, text } = req.body;
+    const { sender, receiver, text, file, fileName, fileType } = req.body;
 
     if (!sender || !receiver) {
       return res.status(400).json({
@@ -16,6 +16,9 @@ exports.sendMessage = async (req, res) => {
       sender,
       receiver,
       text,
+      file,
+      fileName,
+      fileType,
     });
 
     res.status(201).json({

@@ -13,6 +13,7 @@ const ChatPage = () => {
   useEffect(() => {
   if (user?.uid) {
     socket.emit("join", user.uid);
+    socket.emit("userOnline", user.uid);
   }
 }, [user]);
 

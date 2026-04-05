@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../../store/userSlice";
 
-// 🔥 Firestore imports
+//  Firestore imports
 import { db } from "../../utils/firebase";
 import { collection, orderBy, query, onSnapshot } from "firebase/firestore";
 
@@ -13,7 +13,7 @@ const Dashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 🔥 SCORE STATE
+  //  SCORE STATE
   const [scores, setScores] = useState([]);
   const [totalScore, setTotalScore] = useState(0); //  NEW
 
@@ -23,7 +23,7 @@ const Dashboard = () => {
     year: user?.year || "",
   });
 
-  // 🔥 REAL-TIME FETCH (FIXED)
+  //  REAL-TIME FETCH (FIXED)
   useEffect(() => {
     const q = query(
       collection(db, "scores"),
@@ -153,7 +153,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* 🔥 TOTAL SCORE (you can connect this to your top card) */}
+      {/*  TOTAL SCORE (you can connect this to your top card) */}
       <div style={{ marginTop: "20px", fontWeight: "bold" }}>
         Total Quiz Score: {totalScore}
       </div>

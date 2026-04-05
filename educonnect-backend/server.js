@@ -9,35 +9,34 @@ const PORT = 5000;
 
 connectDB();
 
-// ✅ SINGLE server instance
+// START SERVER
 const server = http.createServer(app);
 
-// ✅ Initialize socket.io
+// Initialize socket.io
 const io = new Server(server, {
   cors: {
     origin: "*",
   },
 });
 
-// 🔥 NEW: Track online users for private chat
+//  NEW: Track online users for private chat
 let onlineUsers = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // =========================
-  // ✅ USER ONLINE STATUS (existing)
-  // =========================
+  //  USER ONLINE STATUS (existing)
+
   socket.on("userOnline", async (uid) => {
     try {
       socket.userId = uid;
 
-      // 🔥 also store for private chat
+      //  also store for private chat
       onlineUsers[uid] = socket.id;
 
       await User.findOneAndUpdate({ uid }, { isOnline: true });
 
-      // 🔥 broadcast online users
+      //  broadcast online users
       io.emit("online_users", Object.keys(onlineUsers));
 
       console.log(`User ${uid} is online`);
@@ -46,9 +45,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // =========================
-  // ✅ PRIVATE CHAT (NEW 🔥)
-  // =========================
+  //  PRIVATE CHAT (NEW FEATURE)
   socket.on("send_message", (data) => {
     const { receiver } = data;
 
@@ -59,25 +56,22 @@ io.on("connection", (socket) => {
     }
   });
 
-  // =========================
-  // ✅ JOIN EVENT ROOM (existing)
-  // =========================
+  //  JOIN EVENT ROOM (existing)
+
   socket.on("joinEvent", (eventId) => {
     socket.join(eventId);
     console.log(`Joined room: ${eventId}`);
   });
 
-  // =========================
-  // ✅ LEAVE EVENT ROOM (existing)
-  // =========================
+  // LEAVE EVENT ROOM (existing)
+ 
   socket.on("leaveEvent", (eventId) => {
     socket.leave(eventId);
     console.log(`Left room: ${eventId}`);
   });
 
-  // =========================
-  // ✅ GROUP MESSAGE (existing)
-  // =========================
+  //  GROUP MESSAGE (existing)
+  
   socket.on("sendMessage", ({ eventId, message }) => {
     if (!eventId || !message) return;
 
@@ -88,9 +82,8 @@ io.on("connection", (socket) => {
     });
   });
 
-  // =========================
-  // ✅ TYPING INDICATOR (existing)
-  // =========================
+  //  TYPING INDICATOR (existing)
+  
   socket.on("typing", ({ eventId, user }) => {
     socket.to(eventId).emit("userTyping", user);
   });
@@ -99,18 +92,17 @@ io.on("connection", (socket) => {
     socket.to(eventId).emit("userStoppedTyping", user);
   });
 
-  // =========================
-  // ✅ DISCONNECT
-  // =========================
+  //  DISCONNECT
+  
   socket.on("disconnect", async () => {
     console.log("User disconnected:", socket.id);
 
-    // 🔥 remove from private chat tracking
+    //  remove from private chat tracking
     for (let uid in onlineUsers) {
       if (onlineUsers[uid] === socket.id) {
         delete onlineUsers[uid];
 
-        // 🔥 broadcast updated list
+        //  broadcast updated list
         io.emit("online_users", Object.keys(onlineUsers));
 
         try {
@@ -144,7 +136,7 @@ socket.on("stop_typing_private", ({ sender, receiver }) => {
 });
 
 
-// ✅ START SERVER
+// START SERVER
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
