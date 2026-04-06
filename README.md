@@ -12,11 +12,16 @@ EduConnect is a full-stack student collaboration platform designed to connect st
 * Persistent user sessions
 * Automatic backend user profile creation
 
+---
+
 ### 👤 User Management
 
 * MongoDB user profiles
 * Role-based system (student / admin)
 * Online/offline status tracking
+* Editable user profile (bio, branch, year, etc.)
+
+---
 
 ### 💬 Real-Time Chat (Core Feature)
 
@@ -27,6 +32,8 @@ EduConnect is a full-stack student collaboration platform designed to connect st
 * Auto-scroll to latest messages 📜
 * Online users indicator 🟢
 
+---
+
 ### 🧑‍🤝‍🧑 Chat UI
 
 * Sidebar with user list
@@ -36,15 +43,49 @@ EduConnect is a full-stack student collaboration platform designed to connect st
 
 ---
 
+### 📚 Resources Module (NEW)
+
+* Upload academic resources (notes, links, etc.)
+* View shared resources by students
+* Track uploaded user
+* (Future: file upload support like PDF, images)
+
+---
+
+### 🏆 Leaderboard (NEW)
+
+* Rank users based on points
+* Encourages engagement
+* Points system (e.g., uploading resources)
+
+---
+
+### 👤 Profile System (NEW)
+
+* View user profile
+* Edit profile details (bio, branch, year, etc.)
+* Avatar support (planned)
+
+---
+
+### ⚙ Settings (NEW)
+
+* Update personal information
+* Manage profile preferences
+* Future support for account customization
+
+---
+
 ## 🚧 Coming Soon
 
+* 🎯 Placement Preparation Module (Jobs, internships, prep content)
 * 🎤 Voice messages
 * 🎥 Video calling
 * 🔔 Notifications system
 * 🛡 Admin control panel
 * 📎 File & image sharing
 * 👥 Group chat
-
+* 🏅 Badge & achievement system
 
 ---
 
@@ -72,81 +113,6 @@ EduConnect is a full-stack student collaboration platform designed to connect st
 
 ---
 
-## 📁 Project Structure
-
-```
-educonnect/
-│
-├── educonnect-frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │  
-│   │   │
-│   │   ├── pages/
-│   │   │  
-│   │   │
-│   │   ├── socket.js
-│   │   └── store/
-│
-├── educonnect-backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── routes/
-│   │
-│   ├── server.js
-│
-└── README.md
-```
-
---
-
-## ⚙️ Installation
-
-### 1️⃣ Clone the repository
-
-```
-git clone https://github.com/NirajPandit320/educonnect.git
-cd educonnect
-```
-
----
-
-### 2️⃣ Setup Backend
-
-```
-cd educonnect-backend
-npm install
-npm start
-```
-
----
-
-### 3️⃣ Setup Frontend
-
-```
-cd educonnect-frontend
-npm install
-npm start
-```
-
----
-
-## 🔑 Environment Variables
-
-### Backend (.env)
-
-```
-MONGO_URI=your_mongodb_connection
-PORT=5000
-```
-
-### Frontend (.env)
-
-```
-REACT_APP_FIREBASE_API_KEY=your_key
-REACT_APP_FIREBASE_AUTH_DOMAIN=your_domain
-```
 
 ---
 
@@ -155,11 +121,12 @@ REACT_APP_FIREBASE_AUTH_DOMAIN=your_domain
 1. Login using Firebase authentication
 2. Select a user from sidebar
 3. Start chatting instantly ⚡
-4. Experience:
+4. Explore new modules:
 
-   * Typing indicator ✍
-   * Seen status ✔✔
-   * Online users 🟢
+   * 📚 Upload & view resources
+   * 🏆 Check leaderboard rankings
+   * 👤 Manage your profile
+   * ⚙ Update settings
 
 ---
 
@@ -169,10 +136,9 @@ Contributions are welcome! Feel free to fork and improve.
 
 ---
 
-
 ## 👨‍💻 Author
 
-**Niraj Kumar Pandit**
+**Niraj Kumar Pandit**  
 Final Year Project 🚀
 
 ---
@@ -180,3 +146,5 @@ Final Year Project 🚀
 ## ⭐ Support
 
 If you like this project, give it a ⭐ on GitHub!
+
+
