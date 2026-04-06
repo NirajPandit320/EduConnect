@@ -17,6 +17,7 @@ const EventsList = () => {
   const [removingId, setRemovingId] = useState(null);
 
   const [chatEventId, setChatEventId] = useState(null);
+  
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("hiddenEvents")) || [];
@@ -169,9 +170,13 @@ const EventsList = () => {
       )}
 
       {/* CHAT UI */}
-      {chatEventId && (
-        <EventChat eventId={chatEventId} />
-      )}
+      {chatEventId !== null && (
+      <EventChat
+      key={chatEventId}
+      eventId={chatEventId}
+      onClose={() => setChatEventId(null)}
+      />
+)}
 
       {/* UNDO TOAST */}
       {lastHidden && (

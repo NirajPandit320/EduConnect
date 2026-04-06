@@ -35,7 +35,7 @@ const CreateEvent = ({ onCreated }) => {
   formData.append("description", form.description);
   formData.append("date", form.date);
   formData.append("location", form.location);
-  formData.append("uid", user.uid); // 🔴 MUST be uid
+  formData.append("uid", user.uid); //  MUST be uid
 
   if (image) {
     formData.append("image", image);

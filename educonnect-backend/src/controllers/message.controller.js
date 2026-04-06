@@ -1,14 +1,35 @@
 const Message = require("../models/Message");
+const User = require("../models/User");
+const { createAndEmitNotification } = require("./notification.controller");
 
 // SEND MESSAGE
 
 exports.sendMessage = async (req, res) => {
   try {
-    const { sender, receiver, text, file, fileName, fileType } = req.body;
+    const {
+      sender,
+      receiver,
+      text,
+      file,
+      fileName,
+      fileType,
+      messageType,
+      call,
+    } = req.body;
 
     if (!sender || !receiver) {
       return res.status(400).json({
         message: "Sender and receiver required",
+      });
+    }
+
+    const resolvedMessageType =
+      messageType ||
+      (call ? "call" : file ? "file" : "text");
+
+    if (!text && !file && resolvedMessageType !== "call") {
+      return res.status(400).json({
+        message: "Message text, file, or call payload is required",
       });
     }
 
@@ -19,7 +40,24 @@ exports.sendMessage = async (req, res) => {
       file,
       fileName,
       fileType,
+      messageType: resolvedMessageType,
+      call,
     });
+
+    try {
+      const senderUser = await User.findOne({ uid: sender });
+      const io = req.app.get("io");
+
+      await createAndEmitNotification(io, {
+        userId: receiver,
+        senderId: sender,
+        type: "message",
+        text: `${senderUser?.name || senderUser?.email || "Someone"} sent you a message`,
+        link: "/chat",
+      });
+    } catch (notificationError) {
+      console.log("Notification create failed:", notificationError.message);
+    }
 
     res.status(201).json({
       message: "Message sent",
@@ -37,7 +75,14 @@ exports.sendMessage = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
   try {
-    const { user1, user2 } = req.params;
+    const user1 = req.params.user1 || req.params.sender;
+    const user2 = req.params.user2 || req.params.receiver;
+
+    if (!user1 || !user2) {
+      return res.status(400).json({
+        message: "Both user IDs are required",
+      });
+    }
 
     const messages = await Message.find({
       $or: [
@@ -61,6 +106,12 @@ exports.getMessages = async (req, res) => {
 exports.markAsSeen = async (req, res) => {
   try {
     const { sender, receiver } = req.body;
+
+    if (!sender || !receiver) {
+      return res.status(400).json({
+        message: "Sender and receiver are required",
+      });
+    }
 
     await Message.updateMany(
       { sender, receiver, seen: false },

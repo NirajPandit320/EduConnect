@@ -5,11 +5,14 @@ import DashboardOverview from "../components/dashboard/DashboardOverview";
 import EventsList from "../components/events/EventsList";
 import Quiz from "../components/quizzes/Quiz";
 import ChatPage from "../components/chat/ChatPage";
+import NotificationPanel from "../components/NotificationPanel";
+import { useSelector } from "react-redux";
 
 
 const RootPage = () => {
   const [activePage, setActivePage] = useState("dashboard");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user } = useSelector((state) => state.user);
   
 
   const renderContent = () => {
@@ -27,7 +30,7 @@ const RootPage = () => {
       case "video":
         return <h2>Video Call Feature</h2>;
       case "notifications":
-        return <h2>Notifications</h2>;
+        return <NotificationPanel user={user} />;
       default:
         return <DashboardOverview />;
     }

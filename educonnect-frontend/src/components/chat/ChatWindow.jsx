@@ -1,6 +1,10 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { socket } from "../../socket";
 
+const RTC_CONFIGURATION = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+};
+
 const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -8,11 +12,30 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [messageReactions, setMessageReactions] = useState({});
 
+  const [callType, setCallType] = useState(null);
+  const [callState, setCallState] = useState("idle");
+  const [callBanner, setCallBanner] = useState("");
+
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  const peerConnectionRef = useRef(null);
+  const localStreamRef = useRef(null);
+  const incomingOfferRef = useRef(null);
+  const incomingFromRef = useRef(null);
+  const localMediaRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
+
   const reactionOptions = ["👍", "❤️", "😂", "🔥", "🎉", "😮"];
+
+  useEffect(() => {
+    if (currentUser?.uid) {
+      socket.emit("join", currentUser.uid);
+      socket.emit("register", currentUser.uid);
+    }
+  }, [currentUser]);
 
   const getMessageKey = useCallback((msg) => {
     if (msg?._id) return String(msg._id);
@@ -80,72 +103,64 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
     });
   }, []);
 
-  // FETCH MESSAGES
-  
   const fetchMessages = useCallback(async () => {
-    if (!currentUser || !selectedUser) return;
+    if (!currentUser?.uid || !selectedUser?.uid) return;
 
     try {
       const res = await fetch(
         `http://localhost:5000/api/messages/${currentUser.uid}/${selectedUser.uid}`
       );
       const data = await res.json();
-
       setMessages(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Fetch messages error:", error);
       setMessages([]);
     }
-  }, [currentUser, selectedUser]);
+  }, [currentUser?.uid, selectedUser?.uid]);
 
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
 
-  // REAL-TIME RECEIVE
-  
   useEffect(() => {
-    socket.on("receive_message", (data) => {
+    const onReceiveMessage = (data) => {
       const isConversationMessage =
-        (data.sender === selectedUser?.uid &&
-          data.receiver === currentUser?.uid) ||
-        (data.sender === currentUser?.uid &&
-          data.receiver === selectedUser?.uid);
+        (data.sender === selectedUser?.uid && data.receiver === currentUser?.uid) ||
+        (data.sender === currentUser?.uid && data.receiver === selectedUser?.uid);
 
       if (isConversationMessage) {
         setMessages((prev) => mergeMessages(prev, [data]));
       }
-    });
+    };
 
-    return () => socket.off("receive_message");
-  }, [selectedUser, currentUser, mergeMessages]);
+    socket.on("receive_message", onReceiveMessage);
+    return () => socket.off("receive_message", onReceiveMessage);
+  }, [selectedUser?.uid, currentUser?.uid, mergeMessages]);
 
-  // TYPING LISTENER
-  
   useEffect(() => {
-    socket.on("user_typing", (senderUid) => {
+    const onUserTyping = (senderUid) => {
       if (senderUid === selectedUser?.uid) {
         setIsTyping(true);
       }
-    });
+    };
 
-    socket.on("user_stop_typing", (senderUid) => {
+    const onUserStopTyping = (senderUid) => {
       if (senderUid === selectedUser?.uid) {
         setIsTyping(false);
       }
-    });
+    };
+
+    socket.on("user_typing", onUserTyping);
+    socket.on("user_stop_typing", onUserStopTyping);
 
     return () => {
-      socket.off("user_typing");
-      socket.off("user_stop_typing");
+      socket.off("user_typing", onUserTyping);
+      socket.off("user_stop_typing", onUserStopTyping);
     };
-  }, [selectedUser]);
+  }, [selectedUser?.uid]);
 
-  
-  //  MARK AS SEEN (ONLY ONCE)
-  
   useEffect(() => {
-    if (!currentUser || !selectedUser) return;
+    if (!currentUser?.uid || !selectedUser?.uid) return;
 
     fetch("http://localhost:5000/api/messages/seen", {
       method: "POST",
@@ -156,35 +171,259 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
         sender: selectedUser.uid,
         receiver: currentUser.uid,
       }),
+    }).catch((error) => {
+      console.error("Mark seen failed:", error);
     });
-  }, [selectedUser, currentUser]);
+  }, [selectedUser?.uid, currentUser?.uid]);
 
-  // Keep seen ticks and timestamps fresh while chat is open.
   useEffect(() => {
-    if (!currentUser || !selectedUser) return;
+    if (!currentUser?.uid || !selectedUser?.uid) return;
 
     const intervalId = setInterval(() => {
       fetchMessages();
     }, 8000);
 
     return () => clearInterval(intervalId);
-  }, [currentUser, selectedUser, fetchMessages]);
+  }, [currentUser?.uid, selectedUser?.uid, fetchMessages]);
 
-  //  AUTO SCROLL
- 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const stopLocalStream = useCallback(() => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+
+    if (localMediaRef.current) {
+      localMediaRef.current.srcObject = null;
+    }
+
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+  }, []);
+
+  const closePeerConnection = useCallback(() => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.onconnectionstatechange = null;
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+  }, []);
+
+  const resetCallState = useCallback(() => {
+    incomingOfferRef.current = null;
+    incomingFromRef.current = null;
+    setCallState("idle");
+    setCallType(null);
+  }, []);
+
+  const cleanupCall = useCallback(() => {
+    closePeerConnection();
+    stopLocalStream();
+    resetCallState();
+  }, [closePeerConnection, stopLocalStream, resetCallState]);
+
+  const startLocalMedia = useCallback(async (mode) => {
+    const constraints =
+      mode === "video" ? { audio: true, video: true } : { audio: true, video: false };
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    localStreamRef.current = stream;
+
+    if (localMediaRef.current) {
+      localMediaRef.current.srcObject = stream;
+    }
+
+    return stream;
+  }, []);
+
+  const setupPeerConnection = useCallback(
+    (targetUid, stream) => {
+      const pc = new RTCPeerConnection(RTC_CONFIGURATION);
+
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      pc.ontrack = (event) => {
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+        }
+
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+        }
+      };
+
+      pc.onicecandidate = (event) => {
+        if (!event.candidate || !currentUser?.uid) return;
+
+        socket.emit("ice-candidate", {
+          to: targetUid,
+          from: currentUser.uid,
+          candidate: event.candidate,
+        });
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState;
+
+        if (state === "connected") {
+          setCallState("connected");
+          setCallBanner("");
+        }
+
+        if (state === "failed" || state === "disconnected" || state === "closed") {
+          cleanupCall();
+        }
+      };
+
+      peerConnectionRef.current = pc;
+      return pc;
+    },
+    [cleanupCall, currentUser?.uid]
+  );
+
+  useEffect(() => {
+    const onIncomingCall = ({ offer, from, type }) => {
+      if (!offer || !from || from !== selectedUser?.uid) return;
+
+      incomingOfferRef.current = offer;
+      incomingFromRef.current = from;
+      setCallType(type || "audio");
+      setCallState("incoming");
+      setCallBanner("Incoming call...");
+    };
+
+    const onCallAccepted = async ({ answer, from, type }) => {
+      if (!answer || from !== selectedUser?.uid || !peerConnectionRef.current) return;
+
+      try {
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+        setCallType(type || callType || "audio");
+        setCallState("connected");
+        setCallBanner("");
+      } catch (error) {
+        console.error("Call accept handling failed:", error);
+        cleanupCall();
+      }
+    };
+
+    const onIceCandidate = async ({ candidate, from }) => {
+      if (!candidate || from !== selectedUser?.uid || !peerConnectionRef.current) return;
+
+      try {
+        await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (error) {
+        console.error("ICE candidate add failed:", error);
+      }
+    };
+
+    const onCallEnded = ({ from }) => {
+      if (from !== selectedUser?.uid) return;
+
+      setCallBanner("Call ended");
+      cleanupCall();
+      setTimeout(() => setCallBanner(""), 1800);
+    };
+
+    socket.on("incoming-call", onIncomingCall);
+    socket.on("call-accepted", onCallAccepted);
+    socket.on("ice-candidate", onIceCandidate);
+    socket.on("call-ended", onCallEnded);
+
+    return () => {
+      socket.off("incoming-call", onIncomingCall);
+      socket.off("call-accepted", onCallAccepted);
+      socket.off("ice-candidate", onIceCandidate);
+      socket.off("call-ended", onCallEnded);
+    };
+  }, [callType, cleanupCall, selectedUser?.uid]);
+
   useEffect(() => {
     return () => {
       clearTimeout(typingTimeoutRef.current);
+      cleanupCall();
     };
-  }, []);
+  }, [cleanupCall]);
 
- 
-  //  SEND MESSAGE
-  
+  useEffect(() => {
+    setCallBanner("");
+    cleanupCall();
+  }, [selectedUser?.uid, cleanupCall]);
+
+  const startCall = async (mode) => {
+    if (!currentUser?.uid || !selectedUser?.uid || callState !== "idle") return;
+
+    try {
+      setCallType(mode);
+      setCallState("calling");
+      setCallBanner(`Calling ${selectedUser.name || selectedUser.email || "user"}...`);
+
+      const stream = await startLocalMedia(mode);
+      const pc = setupPeerConnection(selectedUser.uid, stream);
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      socket.emit("call-user", {
+        to: selectedUser.uid,
+        from: currentUser.uid,
+        offer,
+        type: mode,
+      });
+    } catch (error) {
+      console.error("Start call failed:", error);
+      cleanupCall();
+    }
+  };
+
+  const acceptCall = async () => {
+    if (!currentUser?.uid || !incomingOfferRef.current || !incomingFromRef.current) return;
+
+    try {
+      const mode = callType || "audio";
+      const stream = await startLocalMedia(mode);
+      const pc = setupPeerConnection(incomingFromRef.current, stream);
+
+      await pc.setRemoteDescription(new RTCSessionDescription(incomingOfferRef.current));
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      socket.emit("answer-call", {
+        to: incomingFromRef.current,
+        from: currentUser.uid,
+        answer,
+        type: mode,
+      });
+
+      setCallState("connected");
+      setCallBanner("");
+    } catch (error) {
+      console.error("Accept call failed:", error);
+      cleanupCall();
+    }
+  };
+
+  const endCall = () => {
+    if (currentUser?.uid && selectedUser?.uid && callState !== "idle") {
+      socket.emit("end-call", {
+        to: selectedUser.uid,
+        from: currentUser.uid,
+      });
+    }
+
+    cleanupCall();
+  };
+
   const handleSend = async () => {
     if (!input.trim() && !selectedFile) return;
     if (!currentUser?.uid || !selectedUser?.uid) return;
@@ -195,7 +434,7 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
       try {
         fileDataUrl = await fileToDataUrl(selectedFile);
       } catch (error) {
-        console.error("File read error:", error);
+        console.error("File read failed:", error);
         return;
       }
     }
@@ -211,10 +450,8 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
     };
 
     try {
-      // instant socket
       socket.emit("send_message", messageData);
 
-      //  save in DB
       const res = await fetch("http://localhost:5000/api/messages", {
         method: "POST",
         headers: {
@@ -226,9 +463,10 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
       const payload = await res.json();
       const savedMessage = payload?.data;
 
-      // UI update
       setMessages((prev) =>
-        mergeMessages(prev, [savedMessage || { ...messageData, _id: Date.now(), seen: false }])
+        mergeMessages(prev, [
+          savedMessage || { ...messageData, _id: Date.now(), seen: false },
+        ])
       );
 
       setInput("");
@@ -247,9 +485,6 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
     }
   };
 
-  
-  //  HANDLE TYPING
-  
   const handleTyping = (e) => {
     setInput(e.target.value);
 
@@ -284,6 +519,13 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   const addReaction = (msg, emoji) => {
     const key = getMessageKey(msg);
     setMessageReactions((prev) => {
@@ -302,15 +544,6 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
     });
   };
 
-  //  ENTER KEY
-  
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   return (
     <div className="chat-window-container">
       <div className="chat-window-header">
@@ -326,19 +559,89 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
           </div>
         </div>
 
-        <button className="chat-close-btn" onClick={onCloseChat}>
-          ✖
-        </button>
+        <div className="chat-header-actions">
+          <button
+            type="button"
+            className={`chat-call-btn audio ${callType === "audio" && callState !== "idle" ? "active" : ""}`}
+            onClick={() => startCall("audio")}
+            disabled={callState !== "idle"}
+            title="Start audio call"
+          >
+            <span className="chat-call-btn-icon">☎</span>
+            <span>Audio</span>
+          </button>
+
+          <button
+            type="button"
+            className={`chat-call-btn video ${callType === "video" && callState !== "idle" ? "active" : ""}`}
+            onClick={() => startCall("video")}
+            disabled={callState !== "idle"}
+            title="Start video call"
+          >
+            <span className="chat-call-btn-icon">▣</span>
+            <span>Video</span>
+          </button>
+
+          <button className="chat-close-btn" onClick={onCloseChat} type="button">
+            ✖
+          </button>
+        </div>
       </div>
+
+      {callBanner ? <div className="chat-call-banner">{callBanner}</div> : null}
+
+      {callState !== "idle" ? (
+        <div className="chat-call-stage">
+          {(callState === "calling" || callState === "connected") && (
+            <div className="chat-call-media-grid">
+              {callType === "video" ? (
+                <video className="chat-call-remote-video" ref={remoteVideoRef} autoPlay playsInline />
+              ) : (
+                <div className="chat-call-audio-pill">Audio call in progress</div>
+              )}
+
+              <audio ref={remoteAudioRef} autoPlay className="chat-call-remote-audio" />
+
+              <video
+                className={`chat-call-local-video ${callType === "audio" ? "audio-only" : ""}`}
+                ref={localMediaRef}
+                autoPlay
+                muted
+                playsInline
+              />
+            </div>
+          )}
+
+          {callState === "incoming" ? (
+            <div className="chat-call-incoming-box">
+              <p>
+                Incoming {callType || "audio"} call from {selectedUser?.name || "user"}
+              </p>
+              <div className="chat-call-incoming-actions">
+                <button type="button" className="chat-accept-btn" onClick={acceptCall}>
+                  Accept
+                </button>
+                <button type="button" className="chat-decline-btn" onClick={endCall}>
+                  Decline
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {(callState === "calling" || callState === "connected") ? (
+            <button type="button" className="chat-end-call-btn" onClick={endCall}>
+              End Call
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="chat-messages-container">
         {messages.length > 0 ? (
           messages.map((msg) => (
             <div
               key={getMessageKey(msg)}
-              className={`chat-message ${
-                msg.sender === currentUser.uid ? "sent" : "received"
-              }`}
+              className={`chat-message ${msg.sender === currentUser.uid ? "sent" : "received"}`}
             >
               {msg.text ? <div className="chat-message-text">{msg.text}</div> : null}
 
@@ -359,22 +662,18 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
                       rel="noreferrer"
                       className="chat-attachment-link"
                     >
-                      📎 {msg.fileName || "Open attachment"}
+                      Attachment: {msg.fileName || "Open"}
                     </a>
                   )}
                 </div>
               ) : null}
 
               <div className="chat-message-meta">
-                <span className="chat-message-time">
-                  {formatTimestamp(msg.createdAt)}
-                </span>
+                <span className="chat-message-time">{formatTimestamp(msg.createdAt)}</span>
 
                 {msg.sender === currentUser.uid ? (
-                  <span
-                    className={`chat-seen-status ${msg.seen ? "seen-animated" : ""}`}
-                  >
-                    {msg.seen ? "✔✔ Seen" : "✔ Sent"}
+                  <span className={`chat-seen-status ${msg.seen ? "seen-animated" : ""}`}>
+                    {msg.seen ? "Seen" : "Sent"}
                   </span>
                 ) : null}
               </div>
@@ -384,18 +683,13 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
                   <button
                     type="button"
                     key={`${getMessageKey(msg)}-${emoji}`}
-                    className={`chat-reaction-chip ${
-                      (messageReactions[getMessageKey(msg)] || []).includes(emoji)
-                        ? "active"
-                        : ""
-                    }`}
+                    className={`chat-reaction-chip ${(messageReactions[getMessageKey(msg)] || []).includes(emoji) ? "active" : ""}`}
                     onClick={() => addReaction(msg, emoji)}
                   >
                     {emoji}
                   </button>
                 ))}
               </div>
-
             </div>
           ))
         ) : (
@@ -405,11 +699,9 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
           </div>
         )}
 
-        {isTyping && (
-          <div className="chat-typing-indicator">Typing...</div>
-        )}
+        {isTyping ? <div className="chat-typing-indicator">Typing...</div> : null}
 
-        <div ref={messagesEndRef}></div>
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="chat-input-container">
@@ -437,14 +729,14 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
           onKeyDown={handleKeyPress}
         />
 
-        <button className="chat-send-btn" onClick={handleSend}>
+        <button className="chat-send-btn" onClick={handleSend} type="button">
           Send
         </button>
       </div>
 
       {selectedFile ? (
         <div className="chat-selected-file-bar">
-          <span className="chat-selected-file-name">📎 {selectedFile.name}</span>
+          <span className="chat-selected-file-name">Attachment: {selectedFile.name}</span>
           <button
             type="button"
             className="chat-remove-file-btn"

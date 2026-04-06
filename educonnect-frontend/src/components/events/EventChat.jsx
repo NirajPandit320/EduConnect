@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 
 const socket = io("http://localhost:5000");
 
-const EventChat = ({ eventId }) => {
+const EventChat = ({ eventId, onClose }) => {
   const { user } = useSelector((state) => state.user);
 
   const [message, setMessage] = useState("");
@@ -35,6 +35,8 @@ const EventChat = ({ eventId }) => {
 
     setMessages((prev) => [...prev, msgData]);
     setMessage("");
+
+    
   };
 
   return (
@@ -42,7 +44,14 @@ const EventChat = ({ eventId }) => {
       <div className="chat-container">
         <div className="chat-header">
           <h3>💬 Event Chat</h3>
-          <button className="close-chat" onClick={() => {}} title="Close chat">✕</button>
+          <button
+            className="close-chat"
+            onClick={onClose}
+            title="Close chat"
+            type="button"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="messages-container">
@@ -63,7 +72,7 @@ const EventChat = ({ eventId }) => {
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             placeholder="Type message..."
             className="message-input"
           />

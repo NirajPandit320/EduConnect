@@ -1,6 +1,8 @@
 
 // CREATE EVENT (Admin)
 const Event = require("../models/Event");
+const User = require("../models/User");
+const { createAndEmitNotification } = require("./notification.controller");
 
 // CREATE EVENT
 exports.createEvent = async (req, res) => {
@@ -38,6 +40,25 @@ exports.createEvent = async (req, res) => {
     });
 
     await newEvent.save();
+
+    try {
+      const io = req.app.get("io");
+      const users = await User.find({ uid: { $ne: uid } }).select("uid");
+
+      await Promise.all(
+        users.map((user) =>
+          createAndEmitNotification(io, {
+            userId: user.uid,
+            senderId: uid,
+            type: "event",
+            text: `New event published: ${title}`,
+            link: "/events",
+          })
+        )
+      );
+    } catch (notificationError) {
+      console.log("Event create notification failed:", notificationError.message);
+    }
 
     res.status(201).json(newEvent);
 
@@ -99,6 +120,29 @@ exports.joinEvent = async (req, res) => {
 
     event.participants.push(uid);
     await event.save();
+
+    try {
+      const io = req.app.get("io");
+      const joiningUser = await User.findOne({ uid });
+
+      await createAndEmitNotification(io, {
+        userId: event.createdBy,
+        senderId: uid,
+        type: "event",
+        text: `${joiningUser?.name || joiningUser?.email || "Someone"} joined your event: ${event.title}`,
+        link: "/events",
+      });
+
+      await createAndEmitNotification(io, {
+        userId: uid,
+        senderId: event.createdBy,
+        type: "event",
+        text: `You joined ${event.title}`,
+        link: "/events",
+      });
+    } catch (notificationError) {
+      console.log("Join event notification failed:", notificationError.message);
+    }
 
     res.json(event);
 

@@ -2,7 +2,7 @@ const connectDB = require("./src/config/db");
 const http = require("http");
 const app = require("./src/app");
 const User = require("./src/models/User");
-
+const { createAndEmitNotification } = require("./src/controllers/notification.controller");
 const { Server } = require("socket.io");
 
 const PORT = 5000;
@@ -19,11 +19,50 @@ const io = new Server(server, {
   },
 });
 
+app.set("io", io);
+
 //  NEW: Track online users for private chat
 let onlineUsers = {};
 
+const addSocketForUser = (uid, socketId) => {
+  if (!onlineUsers[uid]) {
+    onlineUsers[uid] = new Set();
+  }
+
+  onlineUsers[uid].add(socketId);
+};
+
+const removeSocketForUser = (uid, socketId) => {
+  const sockets = onlineUsers[uid];
+  if (!sockets) return;
+
+  sockets.delete(socketId);
+
+  if (sockets.size === 0) {
+    delete onlineUsers[uid];
+  }
+};
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
+
+  socket.on("join", (uid) => {
+    if (!uid) return;
+
+    socket.join(uid);
+    socket.userId = uid;
+    addSocketForUser(uid, socket.id);
+    console.log(`Joined private room: ${uid}`);
+  });
+
+  socket.on("register", (uid) => {
+    if (!uid) return;
+
+    socket.join(uid);
+    socket.userId = uid;
+    addSocketForUser(uid, socket.id);
+    io.emit("online_users", Object.keys(onlineUsers));
+  });
 
   //  USER ONLINE STATUS (existing)
 
@@ -31,8 +70,8 @@ io.on("connection", (socket) => {
     try {
       socket.userId = uid;
 
-      //  also store for private chat
-      onlineUsers[uid] = socket.id;
+      socket.join(uid);
+      addSocketForUser(uid, socket.id);
 
       await User.findOneAndUpdate({ uid }, { isOnline: true });
 
@@ -49,11 +88,55 @@ io.on("connection", (socket) => {
   socket.on("send_message", (data) => {
     const { receiver } = data;
 
-    const receiverSocket = onlineUsers[receiver];
+    if (!receiver) return;
 
-    if (receiverSocket) {
-      io.to(receiverSocket).emit("receive_message", data);
-    }
+    io.to(receiver).emit("receive_message", data);
+  });
+
+  //  WEBRTC SIGNALING (PRIVATE CALLS)
+  socket.on("call-user", ({ to, from, offer, type }) => {
+    if (!to || !from || !offer) return;
+
+    io.to(to).emit("incoming-call", {
+      from,
+      offer,
+      type: type || "audio",
+    });
+
+    createAndEmitNotification(io, {
+      userId: to,
+      senderId: from,
+      type: "call",
+      text: `Incoming ${type || "audio"} call`,
+      link: "/chat",
+    }).catch((error) => {
+      console.log("Call notification failed:", error.message);
+    });
+  });
+
+  socket.on("answer-call", ({ to, from, answer, type }) => {
+    if (!to || !from || !answer) return;
+
+    io.to(to).emit("call-accepted", {
+      from,
+      answer,
+      type: type || "audio",
+    });
+  });
+
+  socket.on("ice-candidate", ({ to, from, candidate }) => {
+    if (!to || !from || !candidate) return;
+
+    io.to(to).emit("ice-candidate", {
+      from,
+      candidate,
+    });
+  });
+
+  socket.on("end-call", ({ to, from }) => {
+    if (!to || !from) return;
+
+    io.to(to).emit("call-ended", { from });
   });
 
   //  JOIN EVENT ROOM (existing)
@@ -99,18 +182,14 @@ io.on("connection", (socket) => {
 
     //  remove from private chat tracking
     for (let uid in onlineUsers) {
-      if (onlineUsers[uid] === socket.id) {
-        delete onlineUsers[uid];
+      const hadSocket = onlineUsers[uid]?.has(socket.id);
+      removeSocketForUser(uid, socket.id);
 
-        //  broadcast updated list
+      if (hadSocket && !onlineUsers[uid]) {
         io.emit("online_users", Object.keys(onlineUsers));
 
         try {
-          await User.findOneAndUpdate(
-            { uid },
-            { isOnline: false }
-          );
-
+          await User.findOneAndUpdate({ uid }, { isOnline: false });
           console.log(`User ${uid} is offline`);
         } catch (err) {
           console.log("Disconnect error:", err.message);
@@ -119,20 +198,16 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("typing_private", ({ sender, receiver }) => {
-  const receiverSocket = onlineUsers[receiver];
+    if (!sender || !receiver) return;
 
-  if (receiverSocket) {
-    io.to(receiverSocket).emit("user_typing", sender);
-  }
-});
+    io.to(receiver).emit("user_typing", sender);
+  });
 
-socket.on("stop_typing_private", ({ sender, receiver }) => {
-  const receiverSocket = onlineUsers[receiver];
+  socket.on("stop_typing_private", ({ sender, receiver }) => {
+    if (!sender || !receiver) return;
 
-  if (receiverSocket) {
-    io.to(receiverSocket).emit("user_stop_typing", sender);
-  }
-});
+    io.to(receiver).emit("user_stop_typing", sender);
+  });
 });
 
 

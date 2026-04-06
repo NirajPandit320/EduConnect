@@ -22,6 +22,30 @@ const messageSchema = new mongoose.Schema(
     fileType: {
       type: String,
     },
+    messageType: {
+      type: String,
+      enum: ["text", "file", "call"],
+      default: "text",
+    },
+    call: {
+      type: {
+        type: String,
+        enum: ["audio", "video"],
+      },
+      status: {
+        type: String,
+        enum: ["started", "missed", "ended", "rejected"],
+      },
+      durationSec: {
+        type: Number,
+      },
+      startedAt: {
+        type: Date,
+      },
+      endedAt: {
+        type: Date,
+      },
+    },
     seen: {
       type: Boolean,
       default: false,

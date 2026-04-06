@@ -1,6 +1,7 @@
 //CRUD operations for posts
 const Post = require("../models/Post");
 const User = require("../models/User");
+const { createAndEmitNotification } = require("./notification.controller");
 
 // CREATE POST
 exports.createPost = async (req, res) => {
@@ -19,6 +20,25 @@ exports.createPost = async (req, res) => {
       likes: [],
       comments: [],
     });
+
+    try {
+      const io = req.app.get("io");
+      const users = await User.find({ uid: { $ne: uid } }).select("uid");
+
+      await Promise.all(
+        users.map((user) =>
+          createAndEmitNotification(io, {
+            userId: user.uid,
+            senderId: uid,
+            type: "post",
+            text: "A new post was published on EduConnect",
+            link: "/posts",
+          })
+        )
+      );
+    } catch (notificationError) {
+      console.log("Post notification failed:", notificationError.message);
+    }
 
     res.status(201).json(newPost);
 
@@ -86,6 +106,23 @@ exports.toggleLike = async (req, res) => {
 
     await post.save();
 
+    if (!alreadyLiked) {
+      try {
+        const io = req.app.get("io");
+        const liker = await User.findOne({ uid });
+
+        await createAndEmitNotification(io, {
+          userId: post.uid,
+          senderId: uid,
+          type: "like",
+          text: `${liker?.name || liker?.email || "Someone"} liked your post`,
+          link: "/posts",
+        });
+      } catch (notificationError) {
+        console.log("Like notification failed:", notificationError.message);
+      }
+    }
+
     res.status(200).json(post);
   } catch (error) {
     res.status(500).json({
@@ -116,6 +153,21 @@ exports.addComment = async (req, res) => {
     });
 
     await post.save();
+
+    try {
+      const io = req.app.get("io");
+      const commenter = await User.findOne({ uid });
+
+      await createAndEmitNotification(io, {
+        userId: post.uid,
+        senderId: uid,
+        type: "comment",
+        text: `${commenter?.name || commenter?.email || "Someone"} commented on your post`,
+        link: "/posts",
+      });
+    } catch (notificationError) {
+      console.log("Comment notification failed:", notificationError.message);
+    }
 
     res.status(200).json(post);
   } catch (error) {
