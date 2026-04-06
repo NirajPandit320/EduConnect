@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 
 const CreateEvent = ({ onCreated }) => {
   const { user } = useSelector((state) => state.user);
-  const API = "http://localhost:5000";
 
   const [form, setForm] = useState({
     title: "",

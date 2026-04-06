@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { socket } from "../socket";
+import { socket } from "../../socket";
 
 const NotificationPanel = ({ user }) => {
   const [notifications, setNotifications] = useState([]);

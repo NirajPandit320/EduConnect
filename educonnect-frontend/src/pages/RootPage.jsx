@@ -5,7 +5,7 @@ import DashboardOverview from "../components/dashboard/DashboardOverview";
 import EventsList from "../components/events/EventsList";
 import Quiz from "../components/quizzes/Quiz";
 import ChatPage from "../components/chat/ChatPage";
-import NotificationPanel from "../components/NotificationPanel";
+import NotificationPanel from "../components/notification/NotificationPanel";
 import { useSelector } from "react-redux";
 
 
