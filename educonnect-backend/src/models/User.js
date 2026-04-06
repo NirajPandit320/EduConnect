@@ -7,25 +7,28 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+
     name: {
       type: String,
       required: true,
     },
+
     email: {
       type: String,
       required: true,
       unique: true,
     },
 
-    //MAKING OPTIONAL
     sapId: {
       type: Number,
       required: false,
     },
+
     branch: {
       type: String,
       required: false,
     },
+
     year: {
       type: Number,
       required: false,
@@ -36,6 +39,7 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "admin"],
       default: "student",
     },
+
     status: {
       type: String,
       enum: ["active", "inactive"],
@@ -45,6 +49,71 @@ const userSchema = new mongoose.Schema(
     isOnline: {
       type: Boolean,
       default: false,
+    },
+
+    //  NEW FIELDS 
+
+    points: {
+      type: Number,
+      default: 0, // for leaderboard
+    },
+
+    bio: {
+      type: String,
+      default: "",
+    },
+
+    avatar: {
+      type: String, // URL (future: Cloudinary)
+      default: "",
+    },
+
+    skills: {
+      type: [String],
+      default: [],
+    },
+
+    interests: {
+      type: [String],
+      default: [],
+    },
+
+    githubUrl: {
+      type: String,
+      default: "",
+    },
+
+    linkedinUrl: {
+      type: String,
+      default: "",
+    },
+
+    resumeUrl: {
+      type: String,
+      default: "",
+    },
+
+    settings: {
+      appearance: {
+        theme: { type: String, enum: ["light", "dark"], default: "light" },
+        color: { type: String, default: "indigo" },
+        fontSize: { type: String, enum: ["small", "medium", "large"], default: "medium" },
+      },
+      notifications: {
+        messages: { type: Boolean, default: true },
+        likes: { type: Boolean, default: true },
+        comments: { type: Boolean, default: true },
+        events: { type: Boolean, default: true },
+        email: { type: Boolean, default: false },
+      },
+      privacy: {
+        profileVisibility: { type: String, enum: ["public", "private"], default: "public" },
+        blockedUsers: { type: [String], default: [] },
+      },
+      preferences: {
+        language: { type: String, default: "en" },
+        timezone: { type: String, default: "Asia/Kolkata" },
+      },
     },
   },
   { timestamps: true }

@@ -6,6 +6,10 @@ import EventsList from "../components/events/EventsList";
 import Quiz from "../components/quizzes/Quiz";
 import ChatPage from "../components/chat/ChatPage";
 import NotificationPanel from "../components/notification/NotificationPanel";
+import ResourcesPage from "./ResourcesPage";
+import LeaderboardPage from "./LeaderboardPage";
+import ProfilePage from "./ProfilePage";
+import SettingsPage from "./SettingsPage";
 import { useSelector } from "react-redux";
 
 
@@ -25,10 +29,14 @@ const RootPage = () => {
         return <Quiz />;
       case "chat":
         return <ChatPage />;
-      case "audio":
-        return <h2>Audio Call Feature</h2>;
-      case "video":
-        return <h2>Video Call Feature</h2>;
+      case "resources":
+        return <ResourcesPage />;
+      case "leaderboard":
+        return <LeaderboardPage />;
+      case "profile":
+        return <ProfilePage />;
+      case "settings":
+        return <SettingsPage />;
       case "notifications":
         return <NotificationPanel user={user} />;
       default:

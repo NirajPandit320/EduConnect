@@ -22,6 +22,8 @@ app.use("/api/events", eventRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/resources", require("./routes/resource.routes"));
+app.use("/api/leaderboard", require("./routes/leaderboard.routes"));
 
 
 app.get("/", (req, res) => {

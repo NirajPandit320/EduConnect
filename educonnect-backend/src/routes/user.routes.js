@@ -4,20 +4,25 @@ const User = require("../models/User");
 
 const {
   createUserProfile,
-  getUserByUid
+  getUserByUid,
+  getProfile,        // ✅ NEW
+  updateProfile,     // ✅ NEW
+  getProfileStats,
+  updateSettings,
 } = require("../controllers/user.controller");
 
 
-
+// ===============================
 // CREATE USER PROFILE
 // POST /api/users
-
+// ===============================
 router.post("/", createUserProfile);
 
 
+// ===============================
 // GET ALL USERS
 // GET /api/users
-
+// ===============================
 router.get("/", async (req, res) => {
   try {
     const users = await User.find();
@@ -37,15 +42,32 @@ router.get("/", async (req, res) => {
 });
 
 
+// ===============================
 // GET USER BY FIREBASE UID
 // GET /api/users/uid/:uid
-
+// ===============================
 router.get("/uid/:uid", getUserByUid);
 
 
+// =====================================================
+// 🆕 PROFILE ROUTES (SAFE - NO CONFLICT)
+// =====================================================
+
+// GET PROFILE BY UID
+// GET /api/users/profile/:uid
+router.get("/profile/:uid", getProfile);
+router.get("/profile/:uid/stats", getProfileStats);
+
+// UPDATE PROFILE / SETTINGS
+// PUT /api/users/profile/:uid
+router.put("/profile/:uid", updateProfile);
+router.put("/settings/:uid", updateSettings);
+
+
+// ===============================
 // GET USER BY MONGODB ID
 // GET /api/users/:id
-
+// ===============================
 router.get("/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -70,10 +92,10 @@ router.get("/:id", async (req, res) => {
 });
 
 
-
-// UPDATE USER
+// ===============================
+// UPDATE USER (BY MONGODB ID)
 // PUT /api/users/:id
-
+// ===============================
 router.put("/:id", async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(
@@ -101,9 +123,11 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+
+// ===============================
 // DELETE USER
 // DELETE /api/users/:id
-
+// ===============================
 router.delete("/:id", async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
