@@ -10,6 +10,7 @@ const toNumberOrNull = (value) => {
   const num = Number(value);
   return Number.isNaN(num) ? null : num;
 };
+
 // CREATE JOB (ADMIN)
 exports.createJob = async (req, res) => {
   try {
