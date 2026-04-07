@@ -8,6 +8,7 @@ import ChatPage from "../components/chat/ChatPage";
 import NotificationPanel from "../components/notification/NotificationPanel";
 import ResourcesPage from "./ResourcesPage";
 import LeaderboardPage from "./LeaderboardPage";
+import PlacementPage from "./PlacementPage";
 import ProfilePage from "./ProfilePage";
 import SettingsPage from "./SettingsPage";
 import { useSelector } from "react-redux";
@@ -33,6 +34,8 @@ const RootPage = () => {
         return <ResourcesPage />;
       case "leaderboard":
         return <LeaderboardPage />;
+      case "placement":
+        return <PlacementPage />;
       case "profile":
         return <ProfilePage />;
       case "settings":

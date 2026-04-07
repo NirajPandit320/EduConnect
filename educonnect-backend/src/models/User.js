@@ -77,6 +77,11 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    cgpa: {
+    type: Number,
+    required: false,
+    default: 0,
+    },
 
     githubUrl: {
       type: String,
