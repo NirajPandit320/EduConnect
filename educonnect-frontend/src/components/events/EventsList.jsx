@@ -5,6 +5,8 @@ import ParticipantsModal from "./ParticipantsModal";
 import EventChat from "./EventChat";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
+const API = process.env.REACT_APP_API_URL;
+
 const EventsList = () => {
   const { user } = useSelector((state) => state.user);
 
