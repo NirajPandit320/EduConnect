@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -10,7 +11,10 @@ const messageRoutes = require("./routes/message.routes");
 const notificationRoutes = require("./routes/notification.routes");
 
 app.use(cors({
-  origin: "https://educonnect.netlify.app",
+  origin: [
+    "http://localhost:3000",
+    "https://educonnect.netlify.app"
+  ],
   credentials: true
 }));
 app.use(express.json({ limit: "25mb" }));
