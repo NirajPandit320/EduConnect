@@ -5,8 +5,6 @@ import ParticipantsModal from "./ParticipantsModal";
 import EventChat from "./EventChat";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
-const API = process.env.REACT_APP_API_URL;
-
 const EventsList = () => {
   const { user } = useSelector((state) => state.user);
 
@@ -104,8 +102,8 @@ const EventsList = () => {
                 <div className="event-card">
 
                   {event.image && event.image !== "" && (
-                    <img
-                      src={`${API}/uploads/${event.image}`}
+                      <img
+                        src={`${API_BASE_URL}/uploads/${event.image}`}
                       alt="event"
                       className="event-banner"
                       onError={(e) => {

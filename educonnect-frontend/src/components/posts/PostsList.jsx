@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import PostComposer from "./PostComposer";
 import { API_BASE_URL } from "../../utils/apiConfig";
-const API = process.env.REACT_APP_API_URL;
 
 const PostsList = () => {
 
@@ -166,7 +165,7 @@ const PostsList = () => {
                     {post.images.map((img, i) => (
                       <img
                         key={i}
-                        src={`${API}/uploads/${img}`}
+                        src={`${API_BASE_URL}/uploads/${img}`}
                         alt="post"
                         className="post-image"
                       />
