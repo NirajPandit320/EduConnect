@@ -5,7 +5,7 @@ const User = require("./src/models/User");
 const { createAndEmitNotification } = require("./src/controllers/notification.controller");
 const { Server } = require("socket.io");
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 connectDB();
 
