@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
-
-const socket = io("http://localhost:5000");
+import { socket } from "../../socket";
 
 const Call = ({ user, targetUser, type = "video", onClose }) => {
   const [callState, setCallState] = useState("idle"); 

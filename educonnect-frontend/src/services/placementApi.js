@@ -1,7 +1,8 @@
 import axios from "axios";
+import { API_BASE_URL } from "../utils/apiConfig";
 
 const placementApi = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 export const fetchJobs = async () => {

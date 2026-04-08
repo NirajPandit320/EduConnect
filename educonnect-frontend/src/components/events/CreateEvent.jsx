@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const CreateEvent = ({ onCreated }) => {
   const { user } = useSelector((state) => state.user);
@@ -40,7 +41,7 @@ const CreateEvent = ({ onCreated }) => {
     formData.append("image", image);
   }
 
-  await fetch("http://localhost:5000/api/events", {
+  await fetch(`${API_BASE_URL}/api/events`, {
     method: "POST",
     body: formData,
   });

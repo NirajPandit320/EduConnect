@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../utils/firebase";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const Signup = ({ switchToLogin }) => {
   const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ const handleSignup = async () => {
     const firebaseUser = userCredential.user;
 
     // 2️⃣ Send user profile to backend
-    await fetch("http://localhost:5000/api/users", {
+    await fetch(`${API_BASE_URL}/api/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

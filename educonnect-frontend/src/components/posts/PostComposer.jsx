@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const PostComposer = ({ onPostCreated }) => {
   const { user } = useSelector((state) => state.user);
-  const API = "http://localhost:5000";
 
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
@@ -28,7 +28,7 @@ const PostComposer = ({ onPostCreated }) => {
     });
 
     try {
-      const response = await fetch(`${API}/api/posts`, {
+      const response = await fetch(`${API_BASE_URL}/api/posts`, {
         method: "POST",
         body: formData,
       });

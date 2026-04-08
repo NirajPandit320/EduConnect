@@ -1,5 +1,6 @@
 import { db } from "../utils/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { API_BASE_URL } from "../utils/apiConfig";
 
 export const saveScore = async (score, total, uid) => {
   try {
@@ -14,7 +15,7 @@ export const saveScore = async (score, total, uid) => {
     });
 
     try {
-      await fetch("http://localhost:5000/api/notifications", {
+      await fetch(`${API_BASE_URL}/api/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

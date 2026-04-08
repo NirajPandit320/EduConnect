@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const ParticipantsModal = ({ event, onClose }) => {
-  const API = "http://localhost:5000";
 
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
-        const res = await fetch(`${API}/api/users`);
+        const res = await fetch(`${API_BASE_URL}/api/users`);
         const data = await res.json();
 
         const filtered = data.filter((u) =>

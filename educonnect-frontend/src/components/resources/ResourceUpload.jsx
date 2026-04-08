@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const MAX_FILE_MB = 20;
 const ACCEPTED_TYPES = [
@@ -109,7 +110,7 @@ const ResourceUpload = ({ onUploaded }) => {
         payload.append("files", file);
       });
 
-      const response = await fetch("http://localhost:5000/api/resources", {
+      const response = await fetch(`${API_BASE_URL}/api/resources`, {
         method: "POST",
         body: payload,
       });

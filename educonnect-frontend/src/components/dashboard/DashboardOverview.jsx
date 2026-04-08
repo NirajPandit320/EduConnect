@@ -19,6 +19,7 @@ import {
   where,
   onSnapshot,
 } from "firebase/firestore";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const DashboardOverview = () => {
   const { user } = useSelector((state) => state.user);
@@ -51,7 +52,7 @@ const DashboardOverview = () => {
   const fetchDashboardStats = useCallback(() => {
     if (!user?.uid) return;
 
-    fetch(`http://localhost:5000/api/dashboard/${user.uid}`)
+    fetch(`${API_BASE_URL}/api/dashboard/${user.uid}`)
       .then((res) => res.json())
       .then((data) => setStats(data))
       .catch((error) => console.error("Error fetching stats:", error));

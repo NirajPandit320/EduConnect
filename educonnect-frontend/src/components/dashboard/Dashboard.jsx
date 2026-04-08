@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../../store/userSlice";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 //  Firestore imports
 import { db } from "../../utils/firebase";
@@ -58,7 +59,7 @@ const Dashboard = () => {
       setLoading(true);
 
       const response = await fetch(
-        `http://localhost:5000/api/users/${user._id}`,
+        `${API_BASE_URL}/api/users/${user._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

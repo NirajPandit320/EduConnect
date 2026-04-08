@@ -25,6 +25,7 @@ import { auth } from "../../utils/firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { clearUser } from "../../store/userSlice";
 import { socket } from "../../socket";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 
 const Sidebar = ({
@@ -61,7 +62,7 @@ const Sidebar = ({
   useEffect(() => {
     if (!user?.uid) return undefined;
 
-    fetch(`http://localhost:5000/api/notifications/${user.uid}`)
+    fetch(`${API_BASE_URL}/api/notifications/${user.uid}`)
       .then((res) => res.json())
       .then((data) => {
         if (!Array.isArray(data)) {

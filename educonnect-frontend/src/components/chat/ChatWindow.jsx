@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { socket } from "../../socket";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const RTC_CONFIGURATION = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -108,7 +109,7 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/messages/${currentUser.uid}/${selectedUser.uid}`
+        `${API_BASE_URL}/api/messages/${currentUser.uid}/${selectedUser.uid}`
       );
       const data = await res.json();
       setMessages(Array.isArray(data) ? data : []);
@@ -162,7 +163,7 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
   useEffect(() => {
     if (!currentUser?.uid || !selectedUser?.uid) return;
 
-    fetch("http://localhost:5000/api/messages/seen", {
+    fetch(`${API_BASE_URL}/api/messages/seen`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -452,7 +453,7 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
     try {
       socket.emit("send_message", messageData);
 
-      const res = await fetch("http://localhost:5000/api/messages", {
+      const res = await fetch(`${API_BASE_URL}/api/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

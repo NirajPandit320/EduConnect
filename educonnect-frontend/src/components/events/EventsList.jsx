@@ -3,10 +3,10 @@ import { useSelector } from "react-redux";
 import CreateEvent from "./CreateEvent";
 import ParticipantsModal from "./ParticipantsModal";
 import EventChat from "./EventChat";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const EventsList = () => {
   const { user } = useSelector((state) => state.user);
-  const API = "http://localhost:5000";
 
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -31,7 +31,7 @@ const EventsList = () => {
   // 🔧 UPDATED: added try/catch for safety
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${API}/api/events`);
+      const res = await fetch(`${API_BASE_URL}/api/events`);
       const data = await res.json();
       setEvents(data);
     } catch (err) {
@@ -46,7 +46,7 @@ const EventsList = () => {
   // 🔧 UPDATED: added try/catch
   const joinEvent = async (id) => {
     try {
-      await fetch(`${API}/api/events/${id}/join`, {
+      await fetch(`${API_BASE_URL}/api/events/${id}/join`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid: user.uid }),

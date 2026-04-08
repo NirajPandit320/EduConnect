@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "../../socket";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const NotificationPanel = ({ user }) => {
   const [notifications, setNotifications] = useState([]);
@@ -21,7 +22,7 @@ const NotificationPanel = ({ user }) => {
     if (!user?.uid) return undefined;
 
     setLoading(true);
-    fetch(`http://localhost:5000/api/notifications/${user.uid}`)
+    fetch(`${API_BASE_URL}/api/notifications/${user.uid}`)
       .then((res) => res.json())
       .then((data) => setNotifications(Array.isArray(data) ? data : []))
       .catch(() => setNotifications([]))
@@ -41,7 +42,7 @@ const NotificationPanel = ({ user }) => {
 
   const markRead = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
         method: "PUT",
       });
     } catch (error) {

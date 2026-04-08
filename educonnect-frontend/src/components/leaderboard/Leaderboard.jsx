@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const Leaderboard = () => {
   const { user } = useSelector((state) => state.user);
@@ -11,7 +12,7 @@ const Leaderboard = () => {
 
   const fetchLeaderboard = async () => {
     const response = await fetch(
-      `http://localhost:5000/api/leaderboard?period=${period}&category=${category}`
+      `${API_BASE_URL}/api/leaderboard?period=${period}&category=${category}`
     );
     const data = await response.json();
     setEntries(Array.isArray(data) ? data : []);
@@ -20,7 +21,7 @@ const Leaderboard = () => {
   const fetchPersonalRank = async () => {
     if (!user?.uid) return;
 
-    const response = await fetch(`http://localhost:5000/api/leaderboard/${user.uid}`);
+    const response = await fetch(`${API_BASE_URL}/api/leaderboard/${user.uid}`);
     const data = await response.json();
 
     if (response.ok) {

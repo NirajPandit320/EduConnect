@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
 import { clearUser, setUser } from "./store/userSlice";
 import { auth } from "./utils/firebase";
+import { API_BASE_URL } from "./utils/apiConfig";
 
 function App() {
   const { user } = useSelector((state) => state.user);
@@ -22,14 +23,14 @@ function App() {
       try {
         //  Step 1: Try to fetch user
         let response = await fetch(
-          `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
+          `${API_BASE_URL}/api/users/uid/${firebaseUser.uid}`
         );
 
         //  Step 2: If NOT found → create user
         if (!response.ok) {
           console.log("User not found → creating...");
 
-          const createRes = await fetch("http://localhost:5000/api/users", {
+          const createRes = await fetch(`${API_BASE_URL}/api/users`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -49,7 +50,7 @@ function App() {
 
           //  Step 3: Fetch again after creating
           response = await fetch(
-            `http://localhost:5000/api/users/uid/${firebaseUser.uid}`
+            `${API_BASE_URL}/api/users/uid/${firebaseUser.uid}`
           );
         }
 

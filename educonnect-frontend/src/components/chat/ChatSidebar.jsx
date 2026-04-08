@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "../../socket";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const ChatSidebar = ({ onSelectUser, currentUser }) => {
   const [users, setUsers] = useState([]);
@@ -18,7 +19,7 @@ const ChatSidebar = ({ onSelectUser, currentUser }) => {
 
   //  Fetch users
   useEffect(() => {
-    fetch("http://localhost:5000/api/users")
+    fetch(`${API_BASE_URL}/api/users`)
       .then((res) => res.json())
       .then((data) => {
         const usersArray = data.users || data;

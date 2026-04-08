@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const buildQuery = (filters) => {
   const params = new URLSearchParams();
@@ -29,7 +30,7 @@ const ResourcesList = ({ refreshKey }) => {
 
     try {
       const query = buildQuery(filters);
-      const response = await fetch(`http://localhost:5000/api/resources?${query}`);
+      const response = await fetch(`${API_BASE_URL}/api/resources?${query}`);
       const data = await response.json();
       setResources(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -44,7 +45,7 @@ const ResourcesList = ({ refreshKey }) => {
   }, [refreshKey, filters.q, filters.tag, filters.sort]);
 
   const updateEngagement = async (resourceId, action, payload = {}) => {
-    await fetch(`http://localhost:5000/api/resources/${resourceId}/${action}`, {
+    await fetch(`${API_BASE_URL}/api/resources/${resourceId}/${action}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid: user?.uid, ...payload }),
@@ -54,7 +55,7 @@ const ResourcesList = ({ refreshKey }) => {
   };
 
   const deleteResource = async (resourceId) => {
-    await fetch(`http://localhost:5000/api/resources/${resourceId}`, {
+    await fetch(`${API_BASE_URL}/api/resources/${resourceId}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid: user?.uid }),
@@ -75,7 +76,7 @@ const ResourcesList = ({ refreshKey }) => {
       category: editingResource.category,
     };
 
-    await fetch(`http://localhost:5000/api/resources/${editingResource._id}`, {
+    await fetch(`${API_BASE_URL}/api/resources/${editingResource._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -147,7 +148,7 @@ const ResourcesList = ({ refreshKey }) => {
                 {resource.fileUrl ? (
                   <div className="resource-links">
                     <a
-                      href={resource.fileUrl.startsWith("/uploads/") ? `http://localhost:5000${resource.fileUrl}` : resource.fileUrl}
+                      href={resource.fileUrl.startsWith("/uploads/") ? `${API_BASE_URL}${resource.fileUrl}` : resource.fileUrl}
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => updateEngagement(resource._id, "view")}
@@ -166,7 +167,7 @@ const ResourcesList = ({ refreshKey }) => {
                 {resource.fileUrl && previewable(resource.fileUrl) ? (
                   <iframe
                     title={`preview-${resource._id}`}
-                    src={resource.fileUrl.startsWith("/uploads/") ? `http://localhost:5000${resource.fileUrl}` : resource.fileUrl}
+                    src={resource.fileUrl.startsWith("/uploads/") ? `${API_BASE_URL}${resource.fileUrl}` : resource.fileUrl}
                     className="resource-preview"
                   />
                 ) : null}

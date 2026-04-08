@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const ProfileView = () => {
   const { user } = useSelector((state) => state.user);
@@ -10,7 +11,7 @@ const ProfileView = () => {
   const fetchProfile = async () => {
     if (!user?.uid) return;
 
-    const response = await fetch(`http://localhost:5000/api/users/profile/${user.uid}`);
+    const response = await fetch(`${API_BASE_URL}/api/users/profile/${user.uid}`);
     const data = await response.json();
     setProfile(data?.user || null);
   };
@@ -18,7 +19,7 @@ const ProfileView = () => {
   const fetchStats = async () => {
     if (!user?.uid) return;
 
-    const response = await fetch(`http://localhost:5000/api/users/profile/${user.uid}/stats`);
+    const response = await fetch(`${API_BASE_URL}/api/users/profile/${user.uid}/stats`);
     const data = await response.json();
     setStats(data?.stats || null);
   };

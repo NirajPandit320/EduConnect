@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const ProfileEdit = () => {
   const { user } = useSelector((state) => state.user);
@@ -21,7 +22,7 @@ const ProfileEdit = () => {
   useEffect(() => {
     const load = async () => {
       if (!user?.uid) return;
-      const response = await fetch(`http://localhost:5000/api/users/profile/${user.uid}`);
+      const response = await fetch(`${API_BASE_URL}/api/users/profile/${user.uid}`);
       const data = await response.json();
       const profile = data?.user;
 
@@ -63,7 +64,7 @@ const ProfileEdit = () => {
       sapId: form.sapId ? Number(form.sapId) : undefined,
     };
 
-    const response = await fetch(`http://localhost:5000/api/users/profile/${user.uid}`, {
+    const response = await fetch(`${API_BASE_URL}/api/users/profile/${user.uid}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

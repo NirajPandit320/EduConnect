@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { socket } from "../../socket";
 import { useSelector } from "react-redux";
-
-const socket = io("http://localhost:5000");
 
 const EventChat = ({ eventId, onClose }) => {
   const { user } = useSelector((state) => state.user);

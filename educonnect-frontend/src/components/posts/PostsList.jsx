@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import PostComposer from "./PostComposer";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const PostsList = () => {
 
   const { user } = useSelector((state) => state.user);
-
-  const API = "http://localhost:5000";
 
   const [posts, setPosts] = useState([]);
 
@@ -17,7 +16,7 @@ const PostsList = () => {
   const [showComments, setShowComments] = useState({});
 
   const fetchPosts = async () => {
-    const res = await fetch(`${API}/api/posts`);
+    const res = await fetch(`${API_BASE_URL}/api/posts`);
     const data = await res.json();
     setPosts(data);
   };
@@ -27,7 +26,7 @@ const PostsList = () => {
   }, []);
 
   const deletePost = async (id) => {
-    await fetch(`${API}/api/posts/${id}`, {
+    await fetch(`${API_BASE_URL}/api/posts/${id}`, {
       method: "DELETE",
     });
 
@@ -35,7 +34,7 @@ const PostsList = () => {
   };
 
   const toggleLike = async (id) => {
-    await fetch(`${API}/api/posts/${id}/like`, {
+    await fetch(`${API_BASE_URL}/api/posts/${id}/like`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid: user.uid }),
@@ -47,7 +46,7 @@ const PostsList = () => {
   const addComment = async (id) => {
     if (!commentText[id]) return;
 
-    await fetch(`${API}/api/posts/${id}/comment`, {
+    await fetch(`${API_BASE_URL}/api/posts/${id}/comment`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -74,7 +73,7 @@ const PostsList = () => {
   };
 
   const updatePost = async (id) => {
-    const res = await fetch(`${API}/api/posts/${id}/edit`, {
+    const res = await fetch(`${API_BASE_URL}/api/posts/${id}/edit`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: editText }),
