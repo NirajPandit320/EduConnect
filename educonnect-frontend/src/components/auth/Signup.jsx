@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../utils/firebase";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import { getFirebaseAuthErrorMessage } from "../../utils/firebaseAuthError";
 
 const Signup = ({ switchToLogin }) => {
   const [email, setEmail] = useState("");
@@ -37,7 +38,7 @@ const handleSignup = async () => {
 
     alert("Signup successful & profile saved!");
   } catch (error) {
-    alert(error.message);
+    alert(getFirebaseAuthErrorMessage(error));
   }
 };
 

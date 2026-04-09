@@ -25,6 +25,7 @@ const resourceSchema = new mongoose.Schema(
       enum: ["public", "private"],
       default: "public",
     },
+    allowedUsers: [{ type: String }],
     version: { type: Number, default: 1 },
     likes: [{ type: String }],
     bookmarks: [{ type: String }],

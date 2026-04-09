@@ -8,6 +8,7 @@ const buildQuery = (filters) => {
   if (filters.q) params.set("q", filters.q);
   if (filters.tag) params.set("tag", filters.tag);
   if (filters.sort) params.set("sort", filters.sort);
+  if (filters.uid) params.set("uid", filters.uid);
 
   return params.toString();
 };
@@ -21,6 +22,7 @@ const ResourcesList = ({ refreshKey }) => {
     q: "",
     tag: "",
     sort: "recent",
+    uid: "",
   });
   const [commentText, setCommentText] = useState({});
   const [editingResource, setEditingResource] = useState(null);
@@ -41,8 +43,12 @@ const ResourcesList = ({ refreshKey }) => {
   };
 
   useEffect(() => {
+    setFilters((prev) => ({ ...prev, uid: user?.uid || "" }));
+  }, [user?.uid]);
+
+  useEffect(() => {
     fetchResources();
-  }, [refreshKey, filters.q, filters.tag, filters.sort]);
+  }, [refreshKey, filters.q, filters.tag, filters.sort, filters.uid]);
 
   const updateEngagement = async (resourceId, action, payload = {}) => {
     await fetch(`${API_BASE_URL}/api/resources/${resourceId}/${action}`, {
@@ -151,18 +157,25 @@ const ResourcesList = ({ refreshKey }) => {
                       href={resource.fileUrl.startsWith("/uploads/") ? `${API_BASE_URL}${resource.fileUrl}` : resource.fileUrl}
                       target="_blank"
                       rel="noreferrer"
-                      onClick={() => updateEngagement(resource._id, "view")}
+                      onClick={() => updateEngagement(resource._id, "view", { uid: user?.uid })}
                     >
                       Open
                     </a>
                     <button
                       type="button"
-                      onClick={() => updateEngagement(resource._id, "download")}
+                      onClick={() => updateEngagement(resource._id, "download", { uid: user?.uid })}
                     >
                       Mark Download
                     </button>
                   </div>
                 ) : null}
+
+                <div className="resource-metadata">
+                  <span>Visibility: {resource.visibility}</span>
+                  {resource.fileName ? <span>File: {resource.fileName}</span> : null}
+                  {resource.mimeType ? <span>Type: {resource.mimeType}</span> : null}
+                  {resource.fileSize ? <span>Size: {(resource.fileSize / 1024 / 1024).toFixed(2)} MB</span> : null}
+                </div>
 
                 {resource.fileUrl && previewable(resource.fileUrl) ? (
                   <iframe

@@ -4037,3 +4037,150 @@ body.dark-theme button {
   gap: 8px;
   margin-top: 8px;
 }
+
+/* ================= PATCHED UX FIXES ================= */
+
+.dashboard-layout {
+  margin-left: 260px;
+}
+
+.dashboard-layout.sidebar-collapsed {
+  margin-left: 90px;
+}
+
+.menu-item {
+  width: 100%;
+  min-height: 48px;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-item:hover {
+  transform: none;
+}
+
+.chat-call-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chat-call-toggle-btn {
+  background: #eef2ff;
+  color: #312e81;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.quiz-footer {
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.next-btn.secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.quiz-focus-warning {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.quiz-violation-text {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.resource-file-preview-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resource-file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #f8fafc;
+}
+
+.resource-file-preview-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.resource-file-preview-item small {
+  color: #64748b;
+}
+
+.resource-file-icon {
+  font-size: 20px;
+}
+
+.resource-private-select-box {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.resource-private-select-box p {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.resource-private-user-list {
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resource-private-user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resource-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #475569;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.settings-section-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.post-icon-btn.hide {
+  color: #7c3aed;
+}

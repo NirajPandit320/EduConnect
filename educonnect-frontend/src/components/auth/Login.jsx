@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../utils/firebase";
+import { API_BASE_URL } from "../../utils/apiConfig";
+import { getFirebaseAuthErrorMessage } from "../../utils/firebaseAuthError";
 
 const Login = ({ switchToSignup }) => {
   const [email, setEmail] = useState("");
@@ -11,7 +13,7 @@ const Login = ({ switchToSignup }) => {
     const result = await signInWithEmailAndPassword(auth, email, password);
     const user = result.user;
 
-    const response = await fetch("https://educonnect-yrj7.onrender.com/api/users", {
+    const response = await fetch(`${API_BASE_URL}/api/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -34,7 +36,7 @@ const Login = ({ switchToSignup }) => {
 
   } catch (error) {
     console.error("Login error:", error);
-    alert(error.message);
+    alert(getFirebaseAuthErrorMessage(error));
   }
 };
 

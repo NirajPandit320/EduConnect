@@ -1,23 +1,27 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
 const MAX_FILE_MB = 20;
-const ACCEPTED_TYPES = [
-  "application/pdf",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/plain",
-  "text/x-c",
-  "text/x-c++",
-  "text/x-java-source",
-  "text/x-python",
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-];
+
+const formatFileSize = (bytes) => {
+  if (!bytes && bytes !== 0) return "-";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const getFileTypeIcon = (mimeType, fileName) => {
+  if (mimeType?.startsWith("image/")) return "🖼";
+  if (mimeType?.includes("pdf") || /\.pdf$/i.test(fileName || "")) return "📄";
+  if (mimeType?.includes("presentation") || /\.(ppt|pptx)$/i.test(fileName || "")) return "📊";
+  if (mimeType?.includes("word") || /\.(doc|docx)$/i.test(fileName || "")) return "📝";
+  if (mimeType?.startsWith("video/")) return "🎬";
+  if (mimeType?.startsWith("audio/")) return "🎧";
+  if (mimeType?.includes("zip") || /\.(zip|rar|7z)$/i.test(fileName || "")) return "🗜";
+  if (/\.(js|jsx|ts|tsx|py|java|cpp|c|cs|go|rb|php)$/i.test(fileName || "")) return "💻";
+  return "📁";
+};
 
 const ResourceUpload = ({ onUploaded }) => {
   const { user } = useSelector((state) => state.user);
@@ -35,6 +39,23 @@ const ResourceUpload = ({ onUploaded }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [users, setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users`);
+        const data = await response.json();
+        const list = Array.isArray(data?.users) ? data.users : [];
+        setUsers(list.filter((item) => item?.uid && item.uid !== user?.uid));
+      } catch (fetchError) {
+        setUsers([]);
+      }
+    };
+
+    fetchUsers();
+  }, [user?.uid]);
 
   const dragHint = useMemo(() => {
     if (files.length === 0) return "Drag and drop files here";
@@ -47,10 +68,6 @@ const ResourceUpload = ({ onUploaded }) => {
       const tooLarge = file.size > MAX_FILE_MB * 1024 * 1024;
       if (tooLarge) {
         return `Each file must be under ${MAX_FILE_MB}MB`;
-      }
-
-      if (!ACCEPTED_TYPES.includes(file.type)) {
-        return `Unsupported file type: ${file.name}`;
       }
     }
 
@@ -91,6 +108,11 @@ const ResourceUpload = ({ onUploaded }) => {
       return;
     }
 
+    if (form.visibility === "private" && selectedUsers.length === 0) {
+      setError("Select at least one user for private resources");
+      return;
+    }
+
     setUploading(true);
     setError("");
     setSuccess("");
@@ -105,6 +127,7 @@ const ResourceUpload = ({ onUploaded }) => {
       payload.append("visibility", form.visibility);
       payload.append("resourceType", form.resourceType);
       payload.append("category", form.category);
+      payload.append("allowedUsers", JSON.stringify(selectedUsers));
 
       files.forEach((file) => {
         payload.append("files", file);
@@ -130,6 +153,7 @@ const ResourceUpload = ({ onUploaded }) => {
         tags: "",
       }));
       setFiles([]);
+      setSelectedUsers([]);
       onUploaded?.();
     } catch (uploadError) {
       setError(uploadError.message);
@@ -164,7 +188,13 @@ const ResourceUpload = ({ onUploaded }) => {
 
         <select
           value={form.visibility}
-          onChange={(event) => setForm({ ...form, visibility: event.target.value })}
+          onChange={(event) => {
+            const nextVisibility = event.target.value;
+            setForm({ ...form, visibility: nextVisibility });
+            if (nextVisibility === "public") {
+              setSelectedUsers([]);
+            }
+          }}
         >
           <option value="public">Public</option>
           <option value="private">Private</option>
@@ -213,8 +243,54 @@ const ResourceUpload = ({ onUploaded }) => {
           hidden
         />
         <span>{dragHint}</span>
-        <small>PDF, PPT, Docs, code files, images (max {MAX_FILE_MB}MB each)</small>
+        <small>All file types supported (max {MAX_FILE_MB}MB each)</small>
       </label>
+
+      {files.length > 0 ? (
+        <div className="resource-file-preview-list">
+          {files.map((file) => (
+            <div key={`${file.name}-${file.size}`} className="resource-file-preview-item">
+              <span className="resource-file-icon">{getFileTypeIcon(file.type, file.name)}</span>
+              <div>
+                <p>{file.name}</p>
+                <small>{file.type || "Unknown"} | {formatFileSize(file.size)}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {form.visibility === "private" ? (
+        <div className="resource-private-select-box">
+          <p>Select users who can access this resource</p>
+          <div className="resource-private-user-list">
+            {users.length === 0 ? (
+              <small>No users available</small>
+            ) : (
+              users.map((item) => {
+                const checked = selectedUsers.includes(item.uid);
+
+                return (
+                  <label key={item.uid} className="resource-private-user-item">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setSelectedUsers((prev) => (
+                          checked
+                            ? prev.filter((uid) => uid !== item.uid)
+                            : [...prev, item.uid]
+                        ));
+                      }}
+                    />
+                    <span>{item.name || item.email || item.uid}</span>
+                  </label>
+                );
+              })
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {error ? <p className="resource-error">{error}</p> : null}
       {success ? <p className="resource-success">{success}</p> : null}

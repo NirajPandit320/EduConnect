@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import PostComposer from "./PostComposer";
 import { API_BASE_URL } from "../../utils/apiConfig";
@@ -14,6 +14,40 @@ const PostsList = () => {
 
   const [commentText, setCommentText] = useState({});
   const [showComments, setShowComments] = useState({});
+  const [hiddenPostIds, setHiddenPostIds] = useState([]);
+  const [undoPostId, setUndoPostId] = useState("");
+  const hideTimeoutsRef = useRef({});
+
+  const formatPostTimestamp = (value) => {
+    if (!value) return "";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+
+    if (diffMinutes < 1) return "Just now";
+    if (diffMinutes < 60) return `${diffMinutes} mins ago`;
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} hrs ago`;
+
+    const datePart = date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    const timePart = date.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    return `${datePart}, ${timePart}`;
+  };
 
   const fetchPosts = async () => {
     const res = await fetch(`${API_BASE_URL}/api/posts`);
@@ -23,6 +57,14 @@ const PostsList = () => {
 
   useEffect(() => {
     fetchPosts();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      Object.values(hideTimeoutsRef.current).forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+    };
   }, []);
 
   const deletePost = async (id) => {
@@ -88,6 +130,34 @@ const PostsList = () => {
     setEditingPostId(null);
   };
 
+  const hidePost = (postId) => {
+    setHiddenPostIds((prev) => (prev.includes(postId) ? prev : [...prev, postId]));
+    setUndoPostId(postId);
+
+    if (hideTimeoutsRef.current[postId]) {
+      clearTimeout(hideTimeoutsRef.current[postId]);
+    }
+
+    hideTimeoutsRef.current[postId] = setTimeout(() => {
+      setUndoPostId((currentUndo) => (currentUndo === postId ? "" : currentUndo));
+      delete hideTimeoutsRef.current[postId];
+    }, 5000);
+  };
+
+  const undoHidePost = () => {
+    if (!undoPostId) return;
+
+    const postId = undoPostId;
+
+    if (hideTimeoutsRef.current[postId]) {
+      clearTimeout(hideTimeoutsRef.current[postId]);
+      delete hideTimeoutsRef.current[postId];
+    }
+
+    setHiddenPostIds((prev) => prev.filter((id) => id !== postId));
+    setUndoPostId("");
+  };
+
   return (
     <div className="posts-container">
 
@@ -101,7 +171,7 @@ const PostsList = () => {
         </div>
       ) : (
         <div className="posts-feed">
-          {posts.map((post) => (
+          {posts.filter((post) => !hiddenPostIds.includes(post._id)).map((post) => (
 
             <div key={post._id} className="post-card">
 
@@ -113,12 +183,21 @@ const PostsList = () => {
                   </div>
                   <div className="post-user-info">
                     <h4 className="post-author">{post.userName || "User"}</h4>
-                    <span className="post-time">Just now</span>
+                    <span className="post-time">{formatPostTimestamp(post.createdAt)}</span>
                   </div>
                 </div>
 
-                {post.uid === user.uid && (
-                  <div className="post-menu">
+                <div className="post-menu">
+                  <button
+                    className="post-icon-btn hide"
+                    onClick={() => hidePost(post._id)}
+                    title="Hide post"
+                  >
+                    🙈
+                  </button>
+
+                  {post.uid === user.uid && (
+                    <>
                     <button
                       className="post-icon-btn edit"
                       onClick={() => startEdit(post)}
@@ -133,8 +212,9 @@ const PostsList = () => {
                     >
                       🗑️
                     </button>
-                  </div>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* POST CONTENT */}
@@ -255,6 +335,13 @@ const PostsList = () => {
           ))}
         </div>
       )}
+
+      {undoPostId ? (
+        <div className="undo-toast">
+          <span>Post hidden</span>
+          <button type="button" onClick={undoHidePost}>Undo</button>
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -3,6 +3,8 @@ import { socket } from "../../socket";
 
 const Call = ({ user, targetUser, type = "video", onClose }) => {
   const [callState, setCallState] = useState("idle"); 
+  const [isMicMuted, setIsMicMuted] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(type === "video");
   // idle | calling | incoming | connected
 
   const localVideo = useRef();
@@ -120,8 +122,30 @@ const Call = ({ user, targetUser, type = "video", onClose }) => {
   const endCall = () => {
     peerConnection.current?.close();
     localStream.current?.getTracks().forEach((t) => t.stop());
+    setIsMicMuted(false);
+    setIsVideoEnabled(type === "video");
     setCallState("idle");
     onClose();
+  };
+
+  const toggleMic = () => {
+    if (!localStream.current) return;
+
+    const nextMuted = !isMicMuted;
+    localStream.current.getAudioTracks().forEach((track) => {
+      track.enabled = !nextMuted;
+    });
+    setIsMicMuted(nextMuted);
+  };
+
+  const toggleVideo = () => {
+    if (!localStream.current || type !== "video") return;
+
+    const nextEnabled = !isVideoEnabled;
+    localStream.current.getVideoTracks().forEach((track) => {
+      track.enabled = nextEnabled;
+    });
+    setIsVideoEnabled(nextEnabled);
   };
 
   return (
@@ -161,6 +185,16 @@ const Call = ({ user, targetUser, type = "video", onClose }) => {
             autoPlay
             className="remote-video"
           />
+
+          <button onClick={toggleMic}>
+            {isMicMuted ? "Unmute" : "Mute"}
+          </button>
+
+          {type === "video" ? (
+            <button onClick={toggleVideo}>
+              {isVideoEnabled ? "Disable Video" : "Enable Video"}
+            </button>
+          ) : null}
 
           <button onClick={endCall}>End Call</button>
 

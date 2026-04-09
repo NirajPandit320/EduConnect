@@ -12,12 +12,35 @@ import PlacementPage from "./PlacementPage";
 import ProfilePage from "./ProfilePage";
 import SettingsPage from "./SettingsPage";
 import { useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 
+const SUPPORTED_PAGES = new Set([
+  "dashboard",
+  "posts",
+  "events",
+  "quizzes",
+  "chat",
+  "resources",
+  "leaderboard",
+  "placement",
+  "profile",
+  "settings",
+  "notifications",
+]);
 
 const RootPage = () => {
-  const [activePage, setActivePage] = useState("dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useSelector((state) => state.user);
+
+  const routePage = (location.pathname || "/dashboard").replace("/", "");
+  const activePage = SUPPORTED_PAGES.has(routePage) ? routePage : "dashboard";
+
+  const setActivePage = (page) => {
+    const target = SUPPORTED_PAGES.has(page) ? page : "dashboard";
+    navigate(`/${target}`);
+  };
   
 
   const renderContent = () => {
@@ -48,7 +71,7 @@ const RootPage = () => {
   };
 
   return (
-    <div className="dashboard-layout">
+    <div className={`dashboard-layout ${isCollapsed ? "sidebar-collapsed" : ""}`}>
       <Sidebar
         activePage={activePage}
         setActivePage={setActivePage}

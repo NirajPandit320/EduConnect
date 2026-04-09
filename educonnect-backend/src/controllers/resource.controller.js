@@ -11,8 +11,38 @@ const parseTags = (tags) => {
     .filter(Boolean);
 };
 
-const toPublicResource = async (resource) => {
+const parseAllowedUsers = (allowedUsers) => {
+  if (!allowedUsers) return [];
+
+  if (Array.isArray(allowedUsers)) {
+    return [...new Set(allowedUsers.map((uid) => String(uid).trim()).filter(Boolean))];
+  }
+
+  if (typeof allowedUsers === "string") {
+    try {
+      const parsed = JSON.parse(allowedUsers);
+      if (Array.isArray(parsed)) {
+        return [...new Set(parsed.map((uid) => String(uid).trim()).filter(Boolean))];
+      }
+    } catch (error) {
+      return [...new Set(allowedUsers.split(",").map((uid) => uid.trim()).filter(Boolean))];
+    }
+  }
+
+  return [];
+};
+
+const canAccessResource = (resource, uid) => {
+  if (resource.visibility === "public") return true;
+  if (!uid) return false;
+
+  return resource.uploadedBy === uid || (resource.allowedUsers || []).includes(uid);
+};
+
+const toPublicResource = async (resource, viewerUid) => {
   const uploader = await User.findOne({ uid: resource.uploadedBy }).select("name email");
+  const isOwner = viewerUid && resource.uploadedBy === viewerUid;
+  const hasAccess = canAccessResource(resource, viewerUid);
 
   return {
     ...resource.toObject(),
@@ -20,6 +50,8 @@ const toPublicResource = async (resource) => {
     likeCount: resource.likes.length,
     bookmarkCount: resource.bookmarks.length,
     commentCount: resource.comments.length,
+    hasAccess,
+    allowedUsers: isOwner ? resource.allowedUsers || [] : undefined,
   };
 };
 
@@ -34,6 +66,7 @@ exports.uploadResource = async (req, res) => {
       visibility,
       resourceType,
       category,
+      allowedUsers,
     } = req.body;
 
     if (!title || !uploaderUid) {
@@ -43,6 +76,7 @@ exports.uploadResource = async (req, res) => {
     }
 
     const parsedTags = parseTags(tags);
+    const parsedAllowedUsers = parseAllowedUsers(allowedUsers);
     const files = req.files || [];
 
     if (!fileUrl && files.length === 0) {
@@ -61,6 +95,7 @@ exports.uploadResource = async (req, res) => {
         uploadedBy: uploaderUid,
         tags: parsedTags,
         visibility: visibility || "public",
+        allowedUsers: visibility === "private" ? parsedAllowedUsers : [],
         resourceType: resourceType || "link",
         category: category || "notes",
       });
@@ -77,13 +112,14 @@ exports.uploadResource = async (req, res) => {
         uploadedBy: uploaderUid,
         tags: parsedTags,
         visibility: visibility || "public",
+        allowedUsers: visibility === "private" ? parsedAllowedUsers : [],
         resourceType: resourceType || "file",
         category: category || "notes",
       });
     });
 
     const created = await Resource.insertMany(payload);
-    const data = await Promise.all(created.map(toPublicResource));
+    const data = await Promise.all(created.map((resource) => toPublicResource(resource, uploaderUid)));
 
     res.status(201).json({
       message: "Resource uploaded successfully",
@@ -104,29 +140,53 @@ exports.getResources = async (req, res) => {
       tag,
       uploader,
       sort = "recent",
-      visibility = "public",
+      visibility,
+      uid,
     } = req.query;
 
-    const filter = {};
+    const accessFilter = !uid
+      ? { visibility: "public" }
+      : {
+          $or: [
+            { visibility: "public" },
+            { uploadedBy: uid },
+            { allowedUsers: uid },
+          ],
+        };
 
-    if (visibility) {
-      filter.visibility = visibility;
+    const filterParts = [];
+
+    if (visibility === "public") {
+      filterParts.push({ visibility: "public" });
+    } else if (visibility === "private") {
+      if (!uid) {
+        return res.json([]);
+      }
+
+      filterParts.push({
+        visibility: "private",
+        $or: [{ uploadedBy: uid }, { allowedUsers: uid }],
+      });
+    } else {
+      filterParts.push(accessFilter);
     }
 
     if (uploader) {
-      filter.uploadedBy = uploader;
+      filterParts.push({ uploadedBy: uploader });
     }
 
     if (tag) {
-      filter.tags = { $in: [tag] };
+      filterParts.push({ tags: { $in: [tag] } });
     }
 
     if (q) {
-      filter.$or = [
+      filterParts.push({
+        $or: [
         { title: { $regex: q, $options: "i" } },
         { description: { $regex: q, $options: "i" } },
         { tags: { $regex: q, $options: "i" } },
-      ];
+        ],
+      });
     }
 
     let sortBy = { createdAt: -1 };
@@ -139,8 +199,10 @@ exports.getResources = async (req, res) => {
       sortBy = { downloadCount: -1, viewCount: -1, createdAt: -1 };
     }
 
-    const resources = await Resource.find(filter).sort(sortBy);
-    const data = await Promise.all(resources.map(toPublicResource));
+    const query = filterParts.length ? { $and: filterParts } : {};
+
+    const resources = await Resource.find(query).sort(sortBy);
+    const data = await Promise.all(resources.map((resource) => toPublicResource(resource, uid)));
 
     res.json(data);
   } catch (error) {
@@ -154,7 +216,7 @@ exports.getResources = async (req, res) => {
 exports.updateResource = async (req, res) => {
   try {
     const { id } = req.params;
-    const { uid, title, description, visibility, tags, category } = req.body;
+    const { uid, title, description, visibility, tags, category, allowedUsers } = req.body;
 
     const resource = await Resource.findById(id);
     if (!resource) {
@@ -170,6 +232,13 @@ exports.updateResource = async (req, res) => {
     if (visibility !== undefined) resource.visibility = visibility;
     if (category !== undefined) resource.category = category;
     if (tags !== undefined) resource.tags = parseTags(tags);
+    if (allowedUsers !== undefined) {
+      resource.allowedUsers = parseAllowedUsers(allowedUsers);
+    }
+
+    if (visibility === "public") {
+      resource.allowedUsers = [];
+    }
 
     if (req.file) {
       resource.fileUrl = `/uploads/${req.file.filename}`;
@@ -184,7 +253,7 @@ exports.updateResource = async (req, res) => {
 
     res.json({
       message: "Resource updated",
-      data: await toPublicResource(resource),
+      data: await toPublicResource(resource, uid),
     });
   } catch (error) {
     res.status(500).json({
@@ -229,6 +298,10 @@ exports.toggleLike = async (req, res) => {
       return res.status(404).json({ message: "Resource not found" });
     }
 
+    if (!canAccessResource(resource, uid)) {
+      return res.status(403).json({ message: "You do not have access to this resource" });
+    }
+
     const alreadyLiked = resource.likes.includes(uid);
 
     if (alreadyLiked) {
@@ -241,7 +314,7 @@ exports.toggleLike = async (req, res) => {
 
     res.json({
       message: alreadyLiked ? "Unliked" : "Liked",
-      data: await toPublicResource(resource),
+      data: await toPublicResource(resource, uid),
     });
   } catch (error) {
     res.status(500).json({
@@ -261,6 +334,10 @@ exports.toggleBookmark = async (req, res) => {
       return res.status(404).json({ message: "Resource not found" });
     }
 
+    if (!canAccessResource(resource, uid)) {
+      return res.status(403).json({ message: "You do not have access to this resource" });
+    }
+
     const alreadyBookmarked = resource.bookmarks.includes(uid);
 
     if (alreadyBookmarked) {
@@ -273,7 +350,7 @@ exports.toggleBookmark = async (req, res) => {
 
     res.json({
       message: alreadyBookmarked ? "Bookmark removed" : "Bookmarked",
-      data: await toPublicResource(resource),
+      data: await toPublicResource(resource, uid),
     });
   } catch (error) {
     res.status(500).json({
@@ -299,12 +376,16 @@ exports.addComment = async (req, res) => {
       return res.status(404).json({ message: "Resource not found" });
     }
 
+    if (!canAccessResource(resource, uid)) {
+      return res.status(403).json({ message: "You do not have access to this resource" });
+    }
+
     resource.comments.push({ uid, text });
     await resource.save();
 
     res.json({
       message: "Comment added",
-      data: await toPublicResource(resource),
+      data: await toPublicResource(resource, uid),
     });
   } catch (error) {
     res.status(500).json({
@@ -324,6 +405,10 @@ exports.reportResource = async (req, res) => {
       return res.status(404).json({ message: "Resource not found" });
     }
 
+    if (!canAccessResource(resource, uid)) {
+      return res.status(403).json({ message: "You do not have access to this resource" });
+    }
+
     resource.reports.push({ uid, reason: reason || "" });
     await resource.save();
 
@@ -339,14 +424,24 @@ exports.reportResource = async (req, res) => {
 exports.incrementView = async (req, res) => {
   try {
     const { id } = req.params;
+    const { uid } = req.body || {};
 
-    const resource = await Resource.findByIdAndUpdate(
+    const resource = await Resource.findById(id);
+    if (!resource) {
+      return res.status(404).json({ message: "Resource not found" });
+    }
+
+    if (!canAccessResource(resource, uid)) {
+      return res.status(403).json({ message: "You do not have access to this resource" });
+    }
+
+    const updatedResource = await Resource.findByIdAndUpdate(
       id,
       { $inc: { viewCount: 1 } },
       { new: true }
     );
 
-    if (!resource) {
+    if (!updatedResource) {
       return res.status(404).json({ message: "Resource not found" });
     }
 
@@ -362,14 +457,24 @@ exports.incrementView = async (req, res) => {
 exports.incrementDownload = async (req, res) => {
   try {
     const { id } = req.params;
+    const { uid } = req.body || {};
 
-    const resource = await Resource.findByIdAndUpdate(
+    const resource = await Resource.findById(id);
+    if (!resource) {
+      return res.status(404).json({ message: "Resource not found" });
+    }
+
+    if (!canAccessResource(resource, uid)) {
+      return res.status(403).json({ message: "You do not have access to this resource" });
+    }
+
+    const updatedResource = await Resource.findByIdAndUpdate(
       id,
       { $inc: { downloadCount: 1 } },
       { new: true }
     );
 
-    if (!resource) {
+    if (!updatedResource) {
       return res.status(404).json({ message: "Resource not found" });
     }
 

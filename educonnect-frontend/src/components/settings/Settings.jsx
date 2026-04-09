@@ -73,115 +73,113 @@ const Settings = () => {
   return (
     <div className="settings-card">
       <h2>Settings</h2>
-
-      <section>
-        <h4>Appearance</h4>
-        <label>
-          Theme
-          <select
-            value={settings.appearance.theme}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                appearance: { ...prev.appearance, theme: event.target.value },
-              }))
-            }
-          >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-
-        <label>
-          Font Size
-          <select
-            value={settings.appearance.fontSize}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                appearance: { ...prev.appearance, fontSize: event.target.value },
-              }))
-            }
-          >
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
-          </select>
-        </label>
-      </section>
-
-      <section>
-        <h4>Notifications</h4>
-        {Object.keys(settings.notifications).map((key) => (
-          <label key={key} className="settings-toggle">
+      <div className="settings-grid">
+        <section className="settings-section-card">
+          <h4>Appearance</h4>
+          <label>
+            Accent Color
             <input
-              type="checkbox"
-              checked={settings.notifications[key]}
+              value={settings.appearance.color}
               onChange={(event) =>
                 setSettings((prev) => ({
                   ...prev,
-                  notifications: {
-                    ...prev.notifications,
-                    [key]: event.target.checked,
-                  },
+                  appearance: { ...prev.appearance, color: event.target.value },
                 }))
               }
             />
-            {key}
           </label>
-        ))}
-      </section>
 
-      <section>
-        <h4>Privacy</h4>
-        <label>
-          Profile Visibility
-          <select
-            value={settings.privacy.profileVisibility}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                privacy: {
-                  ...prev.privacy,
-                  profileVisibility: event.target.value,
-                },
-              }))
-            }
-          >
-            <option value="public">Public</option>
-            <option value="private">Private</option>
-          </select>
-        </label>
-      </section>
+          <label>
+            Font Size
+            <select
+              value={settings.appearance.fontSize}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  appearance: { ...prev.appearance, fontSize: event.target.value },
+                }))
+              }
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </label>
+        </section>
 
-      <section>
-        <h4>Preferences</h4>
-        <label>
-          Language
-          <input
-            value={settings.preferences.language}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                preferences: { ...prev.preferences, language: event.target.value },
-              }))
-            }
-          />
-        </label>
+        <section className="settings-section-card">
+          <h4>Notifications</h4>
+          {Object.keys(settings.notifications).map((key) => (
+            <label key={key} className="settings-toggle">
+              <input
+                type="checkbox"
+                checked={settings.notifications[key]}
+                onChange={(event) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    notifications: {
+                      ...prev.notifications,
+                      [key]: event.target.checked,
+                    },
+                  }))
+                }
+              />
+              {key}
+            </label>
+          ))}
+        </section>
 
-        <label>
-          Timezone
-          <input
-            value={settings.preferences.timezone}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                preferences: { ...prev.preferences, timezone: event.target.value },
-              }))
-            }
-          />
-        </label>
-      </section>
+        <section className="settings-section-card">
+          <h4>Privacy</h4>
+          <label>
+            Profile Visibility
+            <select
+              value={settings.privacy.profileVisibility}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  privacy: {
+                    ...prev.privacy,
+                    profileVisibility: event.target.value,
+                  },
+                }))
+              }
+            >
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+          </label>
+        </section>
+
+        <section className="settings-section-card">
+          <h4>Preferences</h4>
+          <label>
+            Language
+            <input
+              value={settings.preferences.language}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  preferences: { ...prev.preferences, language: event.target.value },
+                }))
+              }
+            />
+          </label>
+
+          <label>
+            Timezone
+            <input
+              value={settings.preferences.timezone}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  preferences: { ...prev.preferences, timezone: event.target.value },
+                }))
+              }
+            />
+          </label>
+        </section>
+      </div>
 
       <button type="button" onClick={save}>Save Settings</button>
       {status ? <p>{status}</p> : null}

@@ -1,21 +1,46 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { saveScore } from "../../services/scoreService";
 
 const Quiz = () => {
   const API =
     "https://opentdb.com/api.php?amount=10&category=18&type=multiple";
+  const QUIZ_DURATION_SECONDS = 4 * 60;
 
   const { user } = useSelector((state) => state.user);
 
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
-  const [selected, setSelected] = useState("");
+  const [answers, setAnswers] = useState([]);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(QUIZ_DURATION_SECONDS);
+  const [violationCount, setViolationCount] = useState(0);
+  const [showFocusWarning, setShowFocusWarning] = useState(false);
 
- 
-  const [time, setTime] = useState(15);
+  const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
+
+  const decodeHTML = (html) => {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+  };
+
+  const finishQuiz = useCallback((submittedAnswers = answers) => {
+    if (finished) return;
+
+    const finalScore = questions.reduce((total, question, index) => {
+      return submittedAnswers[index] === question.correct ? total + 1 : total;
+    }, 0);
+
+    setScore(finalScore);
+    setFinished(true);
+
+    const total = questions.length;
+    if (total > 0 && user?.uid) {
+      saveScore(finalScore, total, user.uid);
+    }
+  }, [answers, finished, questions, user?.uid]);
 
   // FETCH QUESTIONS
   useEffect(() => {
@@ -33,62 +58,97 @@ const Quiz = () => {
         });
 
         setQuestions(formatted);
+        setAnswers(Array(formatted.length).fill(""));
       });
   }, []);
 
-  // TIMER EFFECT
-useEffect(() => {
-  if (finished) return;
+  // CONTINUOUS QUIZ TIMER
+  useEffect(() => {
+    if (finished || questions.length === 0) return undefined;
 
-  const interval = setInterval(() => {
-    setTime((prev) => {
-      if (prev === 1) {
-        handleNext();
-        return 15;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          finishQuiz();
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [finished, questions.length, finishQuiz]);
+
+  // ANTI-CHEAT: monitor tab/window focus changes
+  useEffect(() => {
+    if (finished || questions.length === 0) return undefined;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") {
+        setViolationCount((prev) => prev + 1);
+        setShowFocusWarning(true);
       }
-      return prev - 1;
+    };
+
+    const handleBlur = () => {
+      setViolationCount((prev) => prev + 1);
+      setShowFocusWarning(true);
+    };
+
+    const handleFocus = () => {
+      setShowFocusWarning(false);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [finished, questions.length]);
+
+  useEffect(() => {
+    if (violationCount >= 3 && !finished) {
+      finishQuiz();
+    }
+  }, [violationCount, finished, finishQuiz]);
+
+  const handleSelectOption = (option) => {
+    setAnswers((prev) => {
+      const copy = [...prev];
+      copy[current] = option;
+      return copy;
     });
-  }, 1000);
-
-  return () => clearInterval(interval);
-
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [current, finished]);
-
-  // SHUFFLE
-  const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
-
-  // DECODE HTML
-  const decodeHTML = (html) => {
-    const txt = document.createElement("textarea");
-    txt.innerHTML = html;
-    return txt.value;
   };
 
-  // NEXT QUESTION
   const handleNext = () => {
-    let updatedScore = score;
-
-    if (selected === questions[current]?.correct) {
-      updatedScore = score + 1;
-      setScore(updatedScore);
-    }
-
-    setSelected("");
-    setTime(15);
-
     if (current + 1 < questions.length) {
       setCurrent((prev) => prev + 1);
-    } else {
-      setFinished(true);
-
-      const total = questions.length;
-
-      if (total > 0 && user?.uid) {
-        // ✅ FIXED: pass uid
-        saveScore(updatedScore, total, user.uid);
-      }
+      return;
     }
+
+    finishQuiz();
+  };
+
+  const handleSkip = () => {
+    handleNext();
+  };
+
+  const handlePrevious = () => {
+    if (current > 0) {
+      setCurrent((prev) => prev - 1);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remaining = seconds % 60;
+    return `${minutes}:${String(remaining).padStart(2, "0")}`;
   };
 
   // RESTART
@@ -128,6 +188,7 @@ useEffect(() => {
 
   const q = questions[current];
   const progress = Math.round(((current + 1) / questions.length) * 100);
+  const selected = answers[current] || "";
 
   return (
     <div className="quiz-container quiz-active">
@@ -138,11 +199,21 @@ useEffect(() => {
           </div>
           <span className="progress-text">Question {current + 1} / {questions.length}</span>
         </div>
-        <div className={`timer ${time <= 5 ? "timer-warning" : ""}`}>
+        <div className={`timer ${timeLeft <= 30 ? "timer-warning" : ""}`}>
           <span className="timer-icon">⏱️</span>
-          <span className="timer-value">{time}s</span>
+          <span className="timer-value">{formatTime(timeLeft)}</span>
         </div>
       </div>
+
+      {showFocusWarning ? (
+        <div className="quiz-focus-warning">Focus lost detected. Keep quiz tab active.</div>
+      ) : null}
+
+      {violationCount > 0 ? (
+        <div className="quiz-violation-text">
+          Warning: {violationCount}/3 focus violations detected.
+        </div>
+      ) : null}
 
       <div className="quiz-body">
         <h2 className="question-text">{q.question}</h2>
@@ -152,7 +223,7 @@ useEffect(() => {
             <button
               key={i}
               className={`option-btn ${selected === opt ? "selected" : ""}`}
-              onClick={() => setSelected(opt)}
+              onClick={() => handleSelectOption(opt)}
             >
               <span className="option-label">{String.fromCharCode(65 + i)}</span>
               <span className="option-text">{opt}</span>
@@ -163,9 +234,23 @@ useEffect(() => {
 
       <div className="quiz-footer">
         <button
+          onClick={handlePrevious}
+          className="next-btn secondary"
+          disabled={current === 0}
+        >
+          ← Previous Question
+        </button>
+
+        <button
+          onClick={handleSkip}
+          className="next-btn secondary"
+        >
+          Skip Question
+        </button>
+
+        <button
           onClick={handleNext}
           className="next-btn"
-          disabled={!selected}
         >
           {current + 1 === questions.length ? "Finish" : "Next"} →
         </button>

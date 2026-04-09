@@ -6,9 +6,31 @@ import { onAuthStateChanged } from "firebase/auth";
 import { clearUser, setUser } from "./store/userSlice";
 import { auth } from "./utils/firebase";
 import { API_BASE_URL } from "./utils/apiConfig";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+
+const ProtectedRoute = ({ user, children }) => {
+  const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/auth" replace state={{ from: location }} />;
+  }
+
+  return children;
+};
+
+const AuthRoute = ({ user }) => {
+  const location = useLocation();
+  const redirectPath = location.state?.from?.pathname || "/dashboard";
+
+  if (user) {
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  return <AuthPage />;
+};
 
 function App() {
-  const { user } = useSelector((state) => state.user);
+  const { user, loading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -58,7 +80,10 @@ function App() {
         const data = await response.json();
         console.log("Final user data:", data);
 
-        dispatch(setUser(data.user));
+        dispatch(setUser(data?.user || {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+        }));
 
       } catch (error) {
         console.error("Backend error:", error);
@@ -76,7 +101,28 @@ function App() {
     return () => unsubscribe();
   }, [dispatch]);
 
-  return user ? <RootPage /> : <AuthPage />;
+  if (loading) {
+    return null;
+  }
+
+  return (
+    <Routes>
+      <Route path="/auth" element={<AuthRoute user={user} />} />
+      <Route
+        path="/"
+        element={<Navigate to={user ? "/dashboard" : "/auth"} replace />}
+      />
+      <Route
+        path="/:page"
+        element={(
+          <ProtectedRoute user={user}>
+            <RootPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route path="*" element={<Navigate to={user ? "/dashboard" : "/auth"} replace />} />
+    </Routes>
+  );
 }
 
 export default App;

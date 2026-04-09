@@ -16,6 +16,8 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
   const [callType, setCallType] = useState(null);
   const [callState, setCallState] = useState("idle");
   const [callBanner, setCallBanner] = useState("");
+  const [isMicMuted, setIsMicMuted] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -225,6 +227,8 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
     incomingFromRef.current = null;
     setCallState("idle");
     setCallType(null);
+    setIsMicMuted(false);
+    setIsVideoEnabled(true);
   }, []);
 
   const cleanupCall = useCallback(() => {
@@ -244,8 +248,31 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
       localMediaRef.current.srcObject = stream;
     }
 
+    setIsMicMuted(false);
+    setIsVideoEnabled(mode === "video");
+
     return stream;
   }, []);
+
+  const toggleMicrophone = () => {
+    if (!localStreamRef.current) return;
+
+    const nextMuted = !isMicMuted;
+    localStreamRef.current.getAudioTracks().forEach((track) => {
+      track.enabled = !nextMuted;
+    });
+    setIsMicMuted(nextMuted);
+  };
+
+  const toggleVideo = () => {
+    if (!localStreamRef.current || callType !== "video") return;
+
+    const nextEnabled = !isVideoEnabled;
+    localStreamRef.current.getVideoTracks().forEach((track) => {
+      track.enabled = nextEnabled;
+    });
+    setIsVideoEnabled(nextEnabled);
+  };
 
   const setupPeerConnection = useCallback(
     (targetUid, stream) => {
@@ -630,9 +657,29 @@ const ChatWindow = ({ currentUser, selectedUser, onCloseChat }) => {
           ) : null}
 
           {(callState === "calling" || callState === "connected") ? (
-            <button type="button" className="chat-end-call-btn" onClick={endCall}>
-              End Call
-            </button>
+            <div className="chat-call-controls">
+              <button
+                type="button"
+                className="chat-call-toggle-btn"
+                onClick={toggleMicrophone}
+              >
+                {isMicMuted ? "Unmute Mic" : "Mute Mic"}
+              </button>
+
+              {callType === "video" ? (
+                <button
+                  type="button"
+                  className="chat-call-toggle-btn"
+                  onClick={toggleVideo}
+                >
+                  {isVideoEnabled ? "Disable Video" : "Enable Video"}
+                </button>
+              ) : null}
+
+              <button type="button" className="chat-end-call-btn" onClick={endCall}>
+                End Call
+              </button>
+            </div>
           ) : null}
         </div>
       ) : null}
