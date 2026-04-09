@@ -11,11 +11,7 @@ const messageRoutes = require("./routes/message.routes");
 const notificationRoutes = require("./routes/notification.routes");
 
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://educonnect.netlify.app"
-  ],
-  credentials: true
+  origin: "*", // allow all origins
 }));
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));

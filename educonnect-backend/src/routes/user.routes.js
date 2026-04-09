@@ -5,8 +5,8 @@ const User = require("../models/User");
 const {
   createUserProfile,
   getUserByUid,
-  getProfile,        // ✅ NEW
-  updateProfile,     // ✅ NEW
+  getProfile,        //  NEW
+  updateProfile,     //  NEW
   getProfileStats,
   updateSettings,
 } = require("../controllers/user.controller");
@@ -50,7 +50,7 @@ router.get("/uid/:uid", getUserByUid);
 
 
 // =====================================================
-// 🆕 PROFILE ROUTES (SAFE - NO CONFLICT)
+// PROFILE ROUTES (SAFE - NO CONFLICT)
 // =====================================================
 
 // GET PROFILE BY UID

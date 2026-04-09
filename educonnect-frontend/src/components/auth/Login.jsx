@@ -7,13 +7,36 @@ const Login = ({ switchToSignup }) => {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Login successful");
-    } catch (error) {
-      alert(error.message);
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    const user = result.user;
+
+    const response = await fetch("https://educonnect-yrj7.onrender.com/api/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        uid: user.uid,
+        name: user.displayName || "User",
+        email: user.email,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Backend error");
     }
-  };
+
+    console.log("User saved:", data);
+    alert("Login successful & synced with DB");
+
+  } catch (error) {
+    console.error("Login error:", error);
+    alert(error.message);
+  }
+};
 
   return (
     <div className="auth-wrapper">
