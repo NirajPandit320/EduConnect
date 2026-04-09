@@ -14,7 +14,6 @@ import {
   FaBell,
   FaSignOutAlt,
   FaBars,
-  FaTimes,
 } from "react-icons/fa";
 
 import { signOut } from "firebase/auth";
@@ -23,8 +22,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearUser } from "../../store/userSlice";
 import { socket } from "../../socket";
 import { API_BASE_URL } from "../../utils/apiConfig";
-
-const MOBILE_BREAKPOINT = 768;
 
 
 const Sidebar = ({
@@ -38,8 +35,6 @@ const Sidebar = ({
   const menuRef = useRef(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [ringBell, setRingBell] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const ringTimeoutRef = useRef(null);
 
   const handleLogout = async () => {
@@ -106,45 +101,6 @@ const Sidebar = ({
   }, [activePage]);
 
   useEffect(() => {
-    const updateViewport = () => {
-      const mobile = window.innerWidth <= MOBILE_BREAKPOINT;
-
-      setIsMobileView(mobile);
-
-      if (!mobile) {
-        setIsMobileOpen(false);
-      }
-    };
-
-    updateViewport();
-    window.addEventListener("resize", updateViewport);
-
-    return () => window.removeEventListener("resize", updateViewport);
-  }, []);
-
-  useEffect(() => {
-    if (!isMobileOpen) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setIsMobileOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isMobileOpen]);
-
-  useEffect(() => {
-    if (isMobileView && !isMobileOpen) return;
-
     const nav = menuRef.current;
     if (!nav) return;
 
@@ -156,14 +112,10 @@ const Sidebar = ({
       block: "nearest",
       inline: "center",
     });
-  }, [activePage, isMobileView, isMobileOpen, isCollapsed]);
+  }, [activePage, isCollapsed]);
 
   const handleMenuClick = (key) => {
     setActivePage(key);
-
-    if (isMobileView) {
-      setIsMobileOpen(false);
-    }
 
     if (key === "notifications") {
       setUnreadCount(0);
@@ -173,119 +125,64 @@ const Sidebar = ({
   };
 
   const toggleSidebar = () => {
-    if (isMobileView) {
-      setIsMobileOpen((prev) => !prev);
-      return;
-    }
-
     setIsCollapsed((prev) => !prev);
   };
 
-  const closeMobileSidebar = () => {
-    setIsMobileOpen(false);
-  };
-
-  const sidebarClasses = [
-    "sidebar",
-    isCollapsed ? "collapsed" : "",
-    isMobileView ? "sidebar-mobile" : "",
-    isMobileView ? (isMobileOpen ? "is-mobile-open" : "is-mobile-closed") : "",
-  ]
+  const sidebarClasses = ["sidebar", isCollapsed ? "collapsed" : ""]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <>
-      {isMobileView && !isMobileOpen ? (
+    <aside className={sidebarClasses}>
+      <div className="sidebar-top">
         <button
           type="button"
-          className="sidebar-mobile-toggle"
-          onClick={() => setIsMobileOpen(true)}
-          aria-label="Open sidebar"
-          aria-expanded="false"
+          className="collapse-btn"
+          onClick={toggleSidebar}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!isCollapsed}
         >
           <FaBars />
-          <span>Menu</span>
         </button>
-      ) : null}
+        {!isCollapsed && <h2 className="logo">📚 EduConnect</h2>}
+      </div>
 
-      {isMobileView && isMobileOpen ? (
-        <button
-          type="button"
-          className="sidebar-backdrop"
-          onClick={closeMobileSidebar}
-          aria-label="Close sidebar backdrop"
-        />
-      ) : null}
-
-      <aside className={sidebarClasses}>
-        <div className="sidebar-top">
+      <nav className="sidebar-menu" ref={menuRef}>
+        {menuItems.map((item) => (
           <button
+            key={item.key}
             type="button"
-            className="collapse-btn"
-            onClick={toggleSidebar}
-            title={
-              isMobileView
-                ? isMobileOpen
-                  ? "Close sidebar"
-                  : "Open sidebar"
-                : isCollapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-            }
-            aria-label={
-              isMobileView
-                ? isMobileOpen
-                  ? "Close sidebar"
-                  : "Open sidebar"
-                : isCollapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-            }
-            aria-expanded={isMobileView ? isMobileOpen : !isCollapsed}
+            className={`menu-item sidebar-item ${activePage === item.key ? "active" : ""}`}
+            onClick={() => handleMenuClick(item.key)}
+            title={item.label}
+            aria-label={item.label}
           >
-            {isMobileView ? (isMobileOpen ? <FaTimes /> : <FaBars />) : <FaBars />}
-          </button>
-          {(!isCollapsed || isMobileView) && (
-            <h2 className="logo">📚 EduConnect</h2>
-          )}
-        </div>
-
-        <nav className="sidebar-menu" ref={menuRef}>
-          {menuItems.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`menu-item ${activePage === item.key ? "active" : ""}`}
-              onClick={() => handleMenuClick(item.key)}
-              title={item.label}
+            <span
+              className={`menu-icon sidebar-icon ${
+                item.key === "notifications" && ringBell ? "bell-ring" : ""
+              }`}
             >
-              <span
-                className={`menu-icon ${
-                  item.key === "notifications" && ringBell ? "bell-ring" : ""
-                }`}
-              >
-                {item.icon}
-                {item.key === "notifications" && unreadCount > 0 ? (
-                  <span
-                    className="notification-badge"
-                    aria-label={`${unreadCount} unread notifications`}
-                  >
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                ) : null}
-              </span>
-              <span className="menu-label">{item.label}</span>
-            </button>
-          ))}
-        </nav>
+              {item.icon}
+              {item.key === "notifications" && unreadCount > 0 ? (
+                <span
+                  className="notification-badge"
+                  aria-label={`${unreadCount} unread notifications`}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
+            </span>
+            <span className="menu-label sidebar-text">{item.label}</span>
+          </button>
+        ))}
+      </nav>
 
-        <button type="button" className="logout-btn" onClick={handleLogout} title="Logout">
-          <FaSignOutAlt />
-          <span className="menu-label">Logout</span>
-        </button>
-      </aside>
-    </>
+      <button type="button" className="logout-btn" onClick={handleLogout} title="Logout">
+        <FaSignOutAlt />
+        <span className="menu-label">Logout</span>
+      </button>
+    </aside>
   );
 };
 
