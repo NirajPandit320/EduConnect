@@ -10,6 +10,19 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import {
+  FiSun,
+  FiMoon,
+  FiEdit3,
+  FiHeart,
+  FiMessageCircle,
+  FiTarget,
+  FiBarChart2,
+  FiUserCheck,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiActivity,
+} from "react-icons/fi";
 
 // ADDED: Firestore imports
 import { db } from "../../utils/firebase";
@@ -153,7 +166,9 @@ const DashboardOverview = () => {
       {/* DARK MODE */}
       <div className="toggle-container">
         <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
-          <span className="toggle-icon">{darkMode ? "☀️" : "🌙"}</span>
+          <span className="toggle-icon">
+            {darkMode ? <FiSun /> : <FiMoon />}
+          </span>
           <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
         </button>
       </div>
@@ -168,7 +183,7 @@ const DashboardOverview = () => {
       <div className="stats-grid">
 
         <div className="stat-card stat-posts">
-          <div className="stat-icon">📝</div>
+          <div className="stat-icon"><FiEdit3 /></div>
           <div className="stat-content">
             <h3><AnimatedNumber value={stats?.totalPosts} /></h3>
             <p>Total Posts</p>
@@ -176,7 +191,7 @@ const DashboardOverview = () => {
         </div>
 
         <div className="stat-card stat-likes">
-          <div className="stat-icon">❤️</div>
+          <div className="stat-icon"><FiHeart /></div>
           <div className="stat-content">
             <h3><AnimatedNumber value={stats?.totalLikes} /></h3>
             <p>Total Likes</p>
@@ -184,7 +199,7 @@ const DashboardOverview = () => {
         </div>
 
         <div className="stat-card stat-comments">
-          <div className="stat-icon">💬</div>
+          <div className="stat-icon"><FiMessageCircle /></div>
           <div className="stat-content">
             <h3><AnimatedNumber value={stats?.totalComments} /></h3>
             <p>Total Comments</p>
@@ -192,7 +207,7 @@ const DashboardOverview = () => {
         </div>
 
         <div className="stat-card stat-quiz">
-          <div className="stat-icon">🎯</div>
+          <div className="stat-icon"><FiTarget /></div>
           <div className="stat-content">
             <h3><AnimatedNumber value={quizScore} /></h3>
             <p>Quiz Score</p>
@@ -203,7 +218,7 @@ const DashboardOverview = () => {
 
       {/* CHART */}
       <div className="chart-card">
-        <h3 className="chart-title">📊 Activity Overview</h3>
+        <h3 className="chart-title"><FiBarChart2 /> Activity Overview</h3>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart
             data={chartData}
@@ -248,7 +263,7 @@ const DashboardOverview = () => {
       {/* PROFILE COMPLETION */}
       <div className="profile-completion">
         <div className="profile-header">
-          <h3>📌 Profile Completion</h3>
+          <h3><FiUserCheck /> Profile Completion</h3>
           <span className="completion-percentage">{profileCompletion}%</span>
         </div>
 
@@ -260,15 +275,21 @@ const DashboardOverview = () => {
         </div>
 
         <p className="completion-text">
-          {profileCompletion === 100
-            ? "✅ Profile is complete!"
-            : "📝 Add your branch and year to complete your profile"}
+          {profileCompletion === 100 ? (
+            <>
+              <FiCheckCircle /> Profile is complete!
+            </>
+          ) : (
+            <>
+              <FiAlertCircle /> Add your branch and year to complete your profile
+            </>
+          )}
         </p>
       </div>
 
       {/* ACTIVITY */}
       <div className="activity-section">
-        <h3>⚡ Recent Activity</h3>
+        <h3><FiActivity /> Recent Activity</h3>
         <div className="activity-list">
           <div className="activity-item">
             <span className="activity-dot"></span>
