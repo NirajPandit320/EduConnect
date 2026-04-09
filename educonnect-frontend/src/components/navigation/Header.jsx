@@ -20,7 +20,14 @@ const Header = () => {
 
   return (
     <header className="main-header">
-      <div className="logo">EduConnect</div>
+      <div className="header-brand" aria-label="EduConnect">
+        <img
+          src="/EduconnectLogo.png"
+          alt="EduConnect"
+          className="header-brand-logo"
+        />
+        <span className="header-brand-text">EduConnect</span>
+      </div>
       <button onClick={handleLogout}>Logout</button>
     </header>
   );

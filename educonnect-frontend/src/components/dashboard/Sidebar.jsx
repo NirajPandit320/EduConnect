@@ -145,7 +145,16 @@ const Sidebar = ({
         >
           <FaBars />
         </button>
-        {!isCollapsed && <h2 className="logo">📚 EduConnect</h2>}
+        {!isCollapsed && (
+          <div className="sidebar-brand" aria-label="EduConnect">
+            <img
+              src="/EduconnectLogo.png"
+              alt="EduConnect"
+              className="sidebar-brand-logo"
+            />
+            <span className="sidebar-brand-text">EduConnect</span>
+          </div>
+        )}
       </div>
 
       <nav className="sidebar-menu" ref={menuRef}>

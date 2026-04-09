@@ -1190,6 +1190,42 @@ button:active {
   background-clip: text;
 }
 
+.sidebar-brand,
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sidebar-brand {
+  flex: 1;
+}
+
+.sidebar-brand-logo,
+.header-brand-logo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.sidebar-brand-text,
+.header-brand-text {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-brand-text {
+  color: #ffffff;
+}
+
+.header-brand-text {
+  color: #1f2937;
+}
+
 /* MENU CONTAINER */
 .sidebar-menu {
   display: flex;
@@ -5310,6 +5346,20 @@ body.dark-theme button {
     justify-content: center;
     margin-bottom: 18px;
     padding: 0;
+  }
+
+  .sidebar-brand {
+    justify-content: center;
+    gap: 0;
+  }
+
+  .sidebar-brand-text {
+    display: none;
+  }
+
+  .sidebar-brand-logo {
+    width: 28px;
+    height: 28px;
   }
 
   .sidebar-menu {
