@@ -7,6 +7,7 @@ import { clearUser, setUser } from "./store/userSlice";
 import { auth } from "./utils/firebase";
 import { API_BASE_URL } from "./utils/apiConfig";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const ProtectedRoute = ({ user, children }) => {
   const location = useLocation();
@@ -121,6 +122,7 @@ function App() {
         )}
       />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/auth"} replace />} />
+      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
 }
