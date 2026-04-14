@@ -1,5 +1,9 @@
+// Job Controller - Production Ready with Authorization
 const Job = require("../models/Job");
 const User = require("../models/User");
+const { sendSuccess, sendError, sendValidationError } = require("../utils/response");
+const { validateRequiredFields } = require("../utils/validators");
+const log = require("../utils/logger");
 
 const normalizeBranch = (value) =>
   String(value || "")
@@ -11,70 +15,139 @@ const toNumberOrNull = (value) => {
   return Number.isNaN(num) ? null : num;
 };
 
-// CREATE JOB (ADMIN)
+/**
+ * CREATE JOB - Admin only
+ */
 exports.createJob = async (req, res) => {
   try {
-    const job = await Job.create(req.body);
+    const {
+      title,
+      company,
+      ctc,
+      description,
+      deadline,
+      createdBy,
+      isAdmin,
+    } = req.body;
 
-    res.status(201).json({
-      message: "Job created",
-      job,
+    // Validation
+    const errors = validateRequiredFields(
+      { title, company, deadline },
+      ["title", "company", "deadline"]
+    );
+    if (errors.length) {
+      return sendValidationError(res, "Validation failed", errors);
+    }
+
+    // Authorization - must be admin
+    if (!isAdmin) {
+      return sendError(res, "Only admins can create jobs", 403);
+    }
+
+    // Create job
+    const job = await Job.create({
+      title: title.trim(),
+      company: company.trim(),
+      ctc: ctc ? Number(ctc) : null,
+      description: description?.trim() || "",
+      deadline: new Date(deadline),
+      createdBy: createdBy || "admin",
+      jobStatus: "active",
+      applicationCount: 0,
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    log.info("Job created", { jobId: job._id, company });
+    return sendSuccess(res, job, "Job created successfully", 201);
+  } catch (error) {
+    log.error("Create job error", error);
+    return sendError(res, "Failed to create job", 500);
   }
 };
 
-// GET ALL JOBS
+/**
+ * GET ALL JOBS - With pagination and filtering
+ */
 exports.getJobs = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
     const query = {};
 
+    // Filter by status
     if (status === "active") {
       query.deadline = { $gte: new Date() };
-    }
-
-    if (status === "expired") {
+      query.jobStatus = "active";
+    } else if (status === "expired") {
       query.deadline = { $lt: new Date() };
     }
 
-    const jobs = await Job.find(query).sort({ createdAt: -1 });
+    const jobs = await Job.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
-    res.json(jobs);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const total = await Job.countDocuments(query);
+
+    return sendSuccess(
+      res,
+      {
+        jobs,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+      "Jobs retrieved successfully"
+    );
+  } catch (error) {
+    log.error("Get jobs error", error);
+    return sendError(res, "Failed to retrieve jobs", 500);
   }
 };
 
-// GET SINGLE JOB
+/**
+ * GET SINGLE JOB BY ID
+ */
 exports.getJobById = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id);
+    const { id } = req.params;
 
-    if (!job) return res.status(404).json({ message: "Not found" });
+    if (!id) {
+      return sendValidationError(res, "Job ID required");
+    }
 
-    res.json(job);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const job = await Job.findById(id);
+    if (!job) {
+      return sendError(res, "Job not found", 404);
+    }
+
+    return sendSuccess(res, job, "Job retrieved successfully");
+  } catch (error) {
+    log.error("Get job by ID error", error);
+    return sendError(res, "Failed to retrieve job", 500);
   }
 };
 
-//Checking eligibility of user for jobs
-
+/**
+ * CHECK ELIGIBILITY - User eligibility for jobs
+ */
 exports.checkEligibility = async (req, res) => {
   try {
     const { uid } = req.params;
 
-    const user = await User.findOne({ uid });
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+    if (!uid) {
+      return sendValidationError(res, "User ID required");
     }
 
-    const jobs = await Job.find();
+    const user = await User.findOne({ uid });
+    if (!user) {
+      return sendError(res, "User not found", 404);
+    }
+
+    const jobs = await Job.find({ jobStatus: "active", deadline: { $gte: new Date() } });
 
     const eligibleJobs = [];
     const notEligibleJobs = [];
@@ -123,15 +196,51 @@ exports.checkEligibility = async (req, res) => {
       }
     });
 
-    res.status(200).json({
-      eligibleJobs,
-      notEligibleJobs,
-    });
+    log.info("Eligibility checked", { uid, eligibleCount: eligibleJobs.length });
 
+    return sendSuccess(
+      res,
+      {
+        eligibleJobs,
+        notEligibleJobs,
+      },
+      "Eligibility check completed"
+    );
   } catch (error) {
-    res.status(500).json({
-      message: "Eligibility check failed",
-      error: error.message,
-    });
+    log.error("Check eligibility error", error);
+    return sendError(res, "Failed to check eligibility", 500);
+  }
+};
+
+/**
+ * DELETE JOB - Admin only
+ */
+exports.deleteJob = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { isAdmin = false } = req.body;
+
+    // Validation
+    if (!jobId) {
+      return sendValidationError(res, "Job ID required");
+    }
+
+    // Authorization
+    if (!isAdmin) {
+      return sendError(res, "Only admins can delete jobs", 403);
+    }
+
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return sendError(res, "Job not found", 404);
+    }
+
+    await Job.findByIdAndDelete(jobId);
+
+    log.info("Job deleted", { jobId, company: job.company });
+    return sendSuccess(res, { deletedJobId: jobId }, "Job deleted successfully");
+  } catch (error) {
+    log.error("Delete job error", error);
+    return sendError(res, "Failed to delete job", 500);
   }
 };

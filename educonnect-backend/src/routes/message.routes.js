@@ -5,15 +5,19 @@ const {
 	sendMessage,
 	getMessages,
 	markAsSeen,
+	deleteMessage,
 } = require("../controllers/message.controller");
 
-// SEND MESSAGE
+// Send message
 router.post("/", sendMessage);
 
-// GET CHAT BETWEEN 2 USERS
+// Get chat between 2 users (with pagination)
 router.get("/:user1/:user2", getMessages);
 
-// MARK MESSAGES AS SEEN
-router.post("/seen", markAsSeen);
+// Mark messages as seen (PUT instead of POST for idempotency)
+router.put("/seen", markAsSeen);
+
+// Delete message
+router.delete("/:messageId", deleteMessage);
 
 module.exports = router;
