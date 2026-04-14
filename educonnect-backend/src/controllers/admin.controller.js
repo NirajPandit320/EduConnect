@@ -14,23 +14,36 @@ exports.adminLogin = (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("req.body.email:", email);
+    console.log("req.body.password:", password);
+    console.log("ADMIN_EMAIL:", ADMIN_EMAIL);
+    console.log("ADMIN_PASSWORD:", ADMIN_PASSWORD);
+
     // Validate required fields
     if (!email || !password) {
       return sendError(res, "Email and password are required", 400);
     }
 
-    // Validate credentials
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      // Create session
-      const sessionToken = createSession(email);
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedPassword = String(password).trim();
+    const normalizedAdminEmail = String(ADMIN_EMAIL).trim().toLowerCase();
+    const normalizedAdminPassword = String(ADMIN_PASSWORD).trim();
 
-      log.info("Admin login successful", { email });
+    // Validate credentials
+    if (
+      normalizedEmail === normalizedAdminEmail &&
+      normalizedPassword === normalizedAdminPassword
+    ) {
+      // Create session
+      const sessionToken = createSession(normalizedAdminEmail);
+
+      log.info("Admin login successful", { email: normalizedAdminEmail });
 
       return sendSuccess(
         res,
         {
           sessionToken,
-          email,
+          email: normalizedAdminEmail,
           message: "Admin login successful",
         },
         "Login successful",
@@ -38,7 +51,10 @@ exports.adminLogin = (req, res) => {
       );
     }
 
-    log.warn("Failed admin login attempt", { email });
+    log.warn("Failed admin login attempt", {
+      email,
+      reason: "Credential mismatch after normalization",
+    });
 
     return sendError(res, "Invalid admin credentials", 401);
   } catch (error) {

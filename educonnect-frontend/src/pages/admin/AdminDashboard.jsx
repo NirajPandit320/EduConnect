@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import StatCard from "../../components/admin/StatCard";
-
-const API = "http://localhost:5000";
+import { fetchAdminStats } from "../../utils/adminHelper";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -10,20 +9,22 @@ const AdminDashboard = () => {
     posts: 0,
     events: 0,
   });
+  const [loading, setLoading] = useState(false);
 
   const fetchStats = async () => {
+    setLoading(true);
+
     try {
-      const res = await fetch(`${API}/api/admin/stats`, {
-        headers: {
-          email: "admin@educonnect.com"
-        }
-      });
-
-      const data = await res.json();
-      setStats(data);
-
+      const response = await fetchAdminStats();
+      console.log("Admin stats response:", response);
+      setStats(response.data || { users: 0, posts: 0, events: 0 });
     } catch (error) {
-      console.log(error);
+      console.error("Failed to fetch admin stats:", error);
+      if (error.message.includes("log in again")) {
+        alert(error.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -33,8 +34,10 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-
       <h1>Admin Dashboard</h1>
+      <button onClick={fetchStats} disabled={loading} style={{ marginTop: "12px" }}>
+        {loading ? "Fetching Stats..." : "Fetch Stats"}
+      </button>
 
       <div style={{
         display: "flex",

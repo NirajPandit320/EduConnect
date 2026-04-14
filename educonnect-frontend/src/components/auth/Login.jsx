@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../utils/firebase";
-import { API_BASE_URL } from "../../utils/apiConfig";
 import { getFirebaseAuthErrorMessage } from "../../utils/firebaseAuthError";
 import { useNavigate } from "react-router-dom";
+import { loginAdmin } from "../../utils/adminHelper";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 const Login = ({ switchToSignup }) => {
   const [email, setEmail] = useState("");
@@ -22,32 +23,25 @@ const Login = ({ switchToSignup }) => {
     try {
       // STEP 1: Try admin login first
       console.log("Attempting admin login...");
-      const adminResponse = await fetch(`${API_BASE_URL}/api/admin/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+      try {
+        const adminData = await loginAdmin(email, password);
 
-      const adminData = await adminResponse.json();
+        if (adminData.success === true) {
+          console.log("Admin login successful");
+          console.log("Admin login response:", adminData);
+          alert("Admin login successful!");
+          navigate("/admin");
+          return;
+        }
+      } catch (adminError) {
+        if (adminError.message !== "Invalid admin credentials") {
+          throw adminError;
+        }
 
-      // STEP 2: If admin login succeeds
-      if (adminResponse.ok && adminData.success === true) {
-        console.log("Admin login successful");
-        localStorage.setItem("admin", "true");
-        localStorage.setItem("adminEmail", email);
-        alert("Admin login successful!");
-        navigate("/admin");
-        setIsLoading(false);
-        return;
+        console.log("Admin login failed, trying user login...");
       }
 
-      // STEP 3: Admin login failed - continue with user login
-      console.log("Admin login failed, trying user login...");
+      // STEP 2: Admin login failed - continue with user login
       const result = await signInWithEmailAndPassword(auth, email, password);
       const user = result.user;
 
