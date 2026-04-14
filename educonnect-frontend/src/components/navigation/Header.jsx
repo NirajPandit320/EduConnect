@@ -12,6 +12,8 @@ const Header = () => {
     try {
       await signOut(auth);
       dispatch(clearUser());
+      localStorage.removeItem("admin");
+      localStorage.removeItem("adminEmail");
       navigate("/"); 
     } catch (error) {
       console.log(error);

@@ -9,6 +9,14 @@ import { API_BASE_URL } from "./utils/apiConfig";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
+const AdminRoute = ({ children }) => {
+  const isAdmin = localStorage.getItem("admin") === "true";
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
 const ProtectedRoute = ({ user, children }) => {
   const location = useLocation();
 
@@ -110,6 +118,14 @@ function App() {
     <Routes>
       <Route path="/auth" element={<AuthRoute user={user} />} />
       <Route
+        path="/admin"
+        element={(
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        )}
+      />
+      <Route
         path="/"
         element={<Navigate to={user ? "/dashboard" : "/auth"} replace />}
       />
@@ -122,7 +138,6 @@ function App() {
         )}
       />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/auth"} replace />} />
-      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
 }
