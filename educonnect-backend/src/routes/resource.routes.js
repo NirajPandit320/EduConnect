@@ -14,9 +14,23 @@ const {
   incrementDownload,
 } = require("../controllers/resource.controller");
 
-router.post("/", upload.array("files", 10), uploadResource);
+router.post(
+  "/",
+  upload.fields([
+    { name: "files", maxCount: 10 },
+    { name: "file", maxCount: 10 },
+  ]),
+  uploadResource
+);
 router.get("/", getResources);
-router.put("/:id", upload.single("file"), updateResource);
+router.put(
+  "/:id",
+  upload.fields([
+    { name: "files", maxCount: 1 },
+    { name: "file", maxCount: 1 },
+  ]),
+  updateResource
+);
 router.delete("/:id", deleteResource);
 
 router.post("/:id/like", toggleLike);

@@ -7,10 +7,14 @@ const APPLICATION_REWARD_POINTS = 5;
 // APPLY JOB
 exports.applyJob = async (req, res) => {
   try {
-    const { jobId, userUid } = req.body;
+    const { jobId, userUid } = req.body || {};
 
     if (!jobId || !userUid) {
-      return res.status(400).json({ message: "jobId and userUid are required" });
+      return res.status(400).json({
+        success: false,
+        message: "jobId and userUid are required",
+        data: null,
+      });
     }
 
     const [job, user] = await Promise.all([
@@ -19,18 +23,28 @@ exports.applyJob = async (req, res) => {
     ]);
 
     if (!job) {
-      return res.status(404).json({ message: "Job not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+        data: null,
+      });
     }
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+        data: null,
+      });
     }
 
     const existing = await Application.findOne({ jobId, userUid });
 
     if (existing) {
       return res.status(409).json({
+        success: false,
         message: "Already applied",
+        data: existing,
         application: existing,
       });
     }
@@ -40,16 +54,27 @@ exports.applyJob = async (req, res) => {
     await User.updateOne({ uid: userUid }, { $inc: { points: APPLICATION_REWARD_POINTS } });
 
     res.status(201).json({
+      success: true,
       message: "Applied successfully",
+      data: app,
       application: app,
       rewardPoints: APPLICATION_REWARD_POINTS,
     });
   } catch (err) {
     if (err?.code === 11000) {
-      return res.status(409).json({ message: "Already applied" });
+      return res.status(409).json({
+        success: false,
+        message: "Already applied",
+        data: null,
+      });
     }
 
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Application failed",
+      data: null,
+      error: err.message,
+    });
   }
 };
 
@@ -64,7 +89,12 @@ exports.getMyApplications = async (req, res) => {
 
     res.json(apps);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch applications",
+      data: null,
+      error: err.message,
+    });
   }
 };
 
@@ -74,11 +104,20 @@ exports.getApplicationForJob = async (req, res) => {
     const application = await Application.findOne({ jobId, userUid: uid });
 
     if (!application) {
-      return res.status(404).json({ message: "Application not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+        data: null,
+      });
     }
 
     return res.status(200).json(application);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch application",
+      data: null,
+      error: err.message,
+    });
   }
 };

@@ -14,14 +14,39 @@ const toNumberOrNull = (value) => {
 // CREATE JOB (ADMIN)
 exports.createJob = async (req, res) => {
   try {
-    const job = await Job.create(req.body);
+    const { title, company, deadline } = req.body || {};
+
+    if (!title || !company) {
+      return res.status(400).json({
+        success: false,
+        message: "title and company are required",
+        data: null,
+      });
+    }
+
+    if (deadline && Number.isNaN(new Date(deadline).getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid deadline",
+        data: null,
+      });
+    }
+
+    const job = await Job.create(req.body || {});
 
     res.status(201).json({
+      success: true,
       message: "Job created",
+      data: job,
       job,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Job creation failed",
+      data: null,
+      error: err.message,
+    });
   }
 };
 
@@ -43,7 +68,12 @@ exports.getJobs = async (req, res) => {
 
     res.json(jobs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch jobs",
+      data: null,
+      error: err.message,
+    });
   }
 };
 
@@ -52,11 +82,49 @@ exports.getJobById = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
 
-    if (!job) return res.status(404).json({ message: "Not found" });
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+        data: null,
+      });
+    }
 
     res.json(job);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch job",
+      data: null,
+      error: err.message,
+    });
+  }
+};
+
+exports.deleteJob = async (req, res) => {
+  try {
+    const deleted = await Job.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+        data: null,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Job deleted",
+      data: deleted,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Job deletion failed",
+      data: null,
+      error: error.message,
+    });
   }
 };
 
@@ -70,7 +138,9 @@ exports.checkEligibility = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
+        success: false,
         message: "User not found",
+        data: null,
       });
     }
 
@@ -124,13 +194,21 @@ exports.checkEligibility = async (req, res) => {
     });
 
     res.status(200).json({
+      success: true,
+      message: "Eligibility checked",
+      data: {
+        eligibleJobs,
+        notEligibleJobs,
+      },
       eligibleJobs,
       notEligibleJobs,
     });
 
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: "Eligibility check failed",
+      data: null,
       error: error.message,
     });
   }

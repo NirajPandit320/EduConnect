@@ -10,6 +10,7 @@ const eventRoutes = require("./routes/event.routes");
 const messageRoutes = require("./routes/message.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const adminRoutes = require("./routes/admin.routes");
+const quizRoutes = require("./routes/quiz.routes");
 
 
 app.use(cors({
@@ -24,13 +25,14 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/events", eventRoutes);
-app.use("/uploads", express.static("uploads"));
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/resources", require("./routes/resource.routes"));
 app.use("/api/leaderboard", require("./routes/leaderboard.routes"));
 app.use("/api/jobs", require("./routes/job.routes"));
 app.use("/api/applications", require("./routes/application.routes"));
+app.use("/api/quiz", quizRoutes);
+app.use("/api/quizzes", quizRoutes);
 app.use("/api/admin", adminRoutes);
 
 

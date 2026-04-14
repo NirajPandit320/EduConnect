@@ -49,4 +49,8 @@ const resourceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+resourceSchema.index({ uploadedBy: 1, createdAt: -1 });
+resourceSchema.index({ visibility: 1, createdAt: -1 });
+resourceSchema.index({ tags: 1 });
+
 module.exports = mongoose.model("Resource", resourceSchema);
