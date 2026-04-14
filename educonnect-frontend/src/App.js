@@ -30,6 +30,16 @@ const AuthRoute = ({ user }) => {
   return <AuthPage />;
 };
 
+const ProtectedAdminRoute = ({ children }) => {
+  const isAdmin = localStorage.getItem("admin") === "true";
+
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   const { user, loading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -114,6 +124,14 @@ function App() {
         element={<Navigate to={user ? "/dashboard" : "/auth"} replace />}
       />
       <Route
+        path="/admin"
+        element={
+          <ProtectedAdminRoute>
+            <AdminDashboard />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
         path="/:page"
         element={(
           <ProtectedRoute user={user}>
@@ -122,7 +140,6 @@ function App() {
         )}
       />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/auth"} replace />} />
-      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
 }

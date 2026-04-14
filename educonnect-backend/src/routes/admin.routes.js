@@ -1,25 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const {
+  adminLogin,
+  adminLogout,
   getAdminStats,
   deletePostAdmin,
   deleteEventAdmin,
 } = require("../controllers/admin.controller");
-
-const { adminLogin } = require("../controllers/admin.controller");
 const isAdmin = require("../middleware/admin.middleware");
 
-// DASHBOARD
+// Public routes
+router.post("/login", adminLogin);
+
+// Protected routes (require admin session)
+router.post("/logout", isAdmin, adminLogout);
 router.get("/stats", isAdmin, getAdminStats);
 
-// POSTS
+// Admin moderation
 router.delete("/posts/:id", isAdmin, deletePostAdmin);
-
-// EVENTS
 router.delete("/events/:id", isAdmin, deleteEventAdmin);
-
-module.exports = router;
-
-router.post("/login", adminLogin);
 
 module.exports = router;

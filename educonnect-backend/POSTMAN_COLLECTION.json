@@ -1,0 +1,508 @@
+{
+  "info": {
+    "name": "EduConnect Production APIs",
+    "description": "Complete API collection for EduConnect MERN Application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"admin@educonnect.com\", \"password\": \"Gayatri@#$123321\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "login"]
+            }
+          }
+        },
+        {
+          "name": "Admin Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{adminSessionToken}}"
+              },
+              {
+                "key": "X-Admin-Session",
+                "value": "{{adminSessionToken}}"
+              },
+              {
+                "key": "Email",
+                "value": "admin@educonnect.com"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{adminSessionToken}}"
+              },
+              {
+                "key": "X-Admin-Session",
+                "value": "{{adminSessionToken}}"
+              },
+              {
+                "key": "Email",
+                "value": "admin@educonnect.com"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Delete Post (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{adminSessionToken}}"
+              },
+              {
+                "key": "X-Admin-Session",
+                "value": "{{adminSessionToken}}"
+              },
+              {
+                "key": "Email",
+                "value": "admin@educonnect.com"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "posts", "{{postId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uid",
+                  "value": "user123",
+                  "type": "text"
+                },
+                {
+                  "key": "content",
+                  "value": "This is my first post!",
+                  "type": "text"
+                },
+                {
+                  "key": "images",
+                  "type": "file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            }
+          }
+        },
+        {
+          "name": "Get All Posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/posts?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Like Post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"uid\": \"user123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}", "like"]
+            }
+          }
+        },
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"uid\": \"user123\", \"text\": \"Great post!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}/comment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}", "comment"]
+            }
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"uid\": \"user123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}/comment/{{commentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}", "comment", "{{commentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Edit Post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"uid\": \"user123\", \"content\": \"Updated content\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}/edit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}", "edit"]
+            }
+          }
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"uid\": \"user123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Tech Workshop 2024",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "A workshop on latest tech trends",
+                  "type": "text"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-05-15",
+                  "type": "text"
+                },
+                {
+                  "key": "location",
+                  "value": "Main Campus",
+                  "type": "text"
+                },
+                {
+                  "key": "createdBy",
+                  "value": "admin123",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"]
+            }
+          }
+        },
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"]
+            }
+          }
+        },
+        {
+          "name": "Join Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"uid\": \"user123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{eventId}}/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events", "{{eventId}}", "join"]
+            }
+          }
+        },
+        {
+          "name": "Leave Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"uid\": \"user123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{eventId}}/leave",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events", "{{eventId}}", "leave"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?userId=user123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", " notifications"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "user123"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"notificationId\": \"notif123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}", "read"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "Get All Jobs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs?limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apply for Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"jobId\": \"job123\", \"userUid\": \"user123\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "adminSessionToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "commentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jobId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

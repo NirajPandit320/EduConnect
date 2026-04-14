@@ -3,6 +3,7 @@ import { auth } from "../../utils/firebase";
 import { useDispatch } from "react-redux";
 import { clearUser } from "../../store/userSlice";
 import { useNavigate } from "react-router-dom";
+import { clearAdminSession } from "../../utils/adminHelper";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -11,8 +12,9 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      clearAdminSession();
       dispatch(clearUser());
-      navigate("/"); 
+      navigate("/");
     } catch (error) {
       console.log(error);
     }
