@@ -9,6 +9,8 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 const eventRoutes = require("./routes/event.routes");
 const messageRoutes = require("./routes/message.routes");
 const notificationRoutes = require("./routes/notification.routes");
+const adminRoutes = require("./routes/admin.routes");
+
 
 app.use(cors({
   origin: "*", // allow all origins
@@ -29,6 +31,7 @@ app.use("/api/resources", require("./routes/resource.routes"));
 app.use("/api/leaderboard", require("./routes/leaderboard.routes"));
 app.use("/api/jobs", require("./routes/job.routes"));
 app.use("/api/applications", require("./routes/application.routes"));
+app.use("/api/admin", adminRoutes);
 
 
 
