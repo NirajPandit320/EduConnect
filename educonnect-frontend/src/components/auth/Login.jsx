@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../../utils/firebase";
 import { API_BASE_URL } from "../../utils/apiConfig";
 import { getFirebaseAuthErrorMessage } from "../../utils/firebaseAuthError";
@@ -7,38 +8,64 @@ import { getFirebaseAuthErrorMessage } from "../../utils/firebaseAuthError";
 const Login = ({ switchToSignup }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
-  try {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    const user = result.user;
+    try {
+      // Step 1: Try admin login first
+      let isAdmin = false;
+      try {
+        const adminRes = await fetch(`${API_BASE_URL}/api/admin/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const adminData = await adminRes.json();
+        if (adminData.success === true) {
+          isAdmin = true;
+        }
+      } catch (adminErr) {
+        console.warn("Admin check failed, continuing with user authentication.");
+      }
 
-    const response = await fetch(`${API_BASE_URL}/api/users`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        uid: user.uid,
-        name: user.displayName || "User",
-        email: user.email,
-      }),
-    });
+      // Step 2: If admin, save state and redirect
+      if (isAdmin) {
+        localStorage.setItem("admin", "true");
+        localStorage.setItem("adminEmail", email);
+        navigate("/admin");
+        return;
+      }
 
-    const data = await response.json();
+      // Step 3: Not admin — continue with normal Firebase user login
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const user = result.user;
 
-    if (!response.ok) {
-      throw new Error(data.message || "Backend error");
+      const response = await fetch(`${API_BASE_URL}/api/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uid: user.uid,
+          name: user.displayName || "User",
+          email: user.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Backend error");
+      }
+
+      console.log("User saved:", data);
+      navigate("/home");
+
+    } catch (error) {
+      console.error("Login error:", error);
+      alert(getFirebaseAuthErrorMessage(error));
     }
-
-    console.log("User saved:", data);
-    alert("Login successful & synced with DB");
-
-  } catch (error) {
-    console.error("Login error:", error);
-    alert(getFirebaseAuthErrorMessage(error));
-  }
-};
+  };
 
   return (
     <div className="auth-wrapper">

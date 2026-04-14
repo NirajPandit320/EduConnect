@@ -40,6 +40,8 @@ const Sidebar = ({
   const handleLogout = async () => {
     await signOut(auth);
     dispatch(clearUser());
+    localStorage.removeItem("admin");
+    localStorage.removeItem("adminEmail");
   };
 
   const menuItems = [
