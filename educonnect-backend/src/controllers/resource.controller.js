@@ -1,6 +1,15 @@
 const Resource = require("../models/Resource");
 const User = require("../models/User");
 
+const collectUploadedFiles = (req) => {
+  if (Array.isArray(req.files)) return req.files;
+  if (req.files && typeof req.files === "object") {
+    return [...(req.files.files || []), ...(req.files.file || [])];
+  }
+  if (req.file) return [req.file];
+  return [];
+};
+
 const parseTags = (tags) => {
   if (Array.isArray(tags)) return tags;
   if (typeof tags !== "string") return [];
@@ -67,7 +76,7 @@ exports.uploadResource = async (req, res) => {
       resourceType,
       category,
       allowedUsers,
-    } = req.body;
+    } = req.body || {};
 
     if (!title || !uploaderUid) {
       return res.status(400).json({
@@ -77,7 +86,7 @@ exports.uploadResource = async (req, res) => {
 
     const parsedTags = parseTags(tags);
     const parsedAllowedUsers = parseAllowedUsers(allowedUsers);
-    const files = req.files || [];
+    const files = collectUploadedFiles(req);
 
     if (!fileUrl && files.length === 0) {
       return res.status(400).json({
@@ -216,7 +225,7 @@ exports.getResources = async (req, res) => {
 exports.updateResource = async (req, res) => {
   try {
     const { id } = req.params;
-    const { uid, title, description, visibility, tags, category, allowedUsers } = req.body;
+    const { uid, title, description, visibility, tags, category, allowedUsers } = req.body || {};
 
     const resource = await Resource.findById(id);
     if (!resource) {
@@ -240,11 +249,14 @@ exports.updateResource = async (req, res) => {
       resource.allowedUsers = [];
     }
 
-    if (req.file) {
-      resource.fileUrl = `/uploads/${req.file.filename}`;
-      resource.fileName = req.file.originalname;
-      resource.fileSize = req.file.size;
-      resource.mimeType = req.file.mimetype;
+    const uploadedFiles = collectUploadedFiles(req);
+
+    if (uploadedFiles.length > 0) {
+      const uploadedFile = uploadedFiles[0];
+      resource.fileUrl = `/uploads/${uploadedFile.filename}`;
+      resource.fileName = uploadedFile.originalname;
+      resource.fileSize = uploadedFile.size;
+      resource.mimeType = uploadedFile.mimetype;
       resource.resourceType = "file";
       resource.version += 1;
     }
@@ -266,7 +278,7 @@ exports.updateResource = async (req, res) => {
 exports.deleteResource = async (req, res) => {
   try {
     const { id } = req.params;
-    const { uid } = req.body;
+    const { uid } = req.body || {};
 
     const resource = await Resource.findById(id);
     if (!resource) {
@@ -291,7 +303,11 @@ exports.deleteResource = async (req, res) => {
 exports.toggleLike = async (req, res) => {
   try {
     const { id } = req.params;
-    const { uid } = req.body;
+    const { uid } = req.body || {};
+
+    if (!uid) {
+      return res.status(400).json({ message: "uid is required" });
+    }
 
     const resource = await Resource.findById(id);
     if (!resource) {
@@ -327,7 +343,11 @@ exports.toggleLike = async (req, res) => {
 exports.toggleBookmark = async (req, res) => {
   try {
     const { id } = req.params;
-    const { uid } = req.body;
+    const { uid } = req.body || {};
+
+    if (!uid) {
+      return res.status(400).json({ message: "uid is required" });
+    }
 
     const resource = await Resource.findById(id);
     if (!resource) {
@@ -363,7 +383,7 @@ exports.toggleBookmark = async (req, res) => {
 exports.addComment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { uid, text } = req.body;
+    const { uid, text } = req.body || {};
 
     if (!uid || !text) {
       return res.status(400).json({
@@ -398,7 +418,11 @@ exports.addComment = async (req, res) => {
 exports.reportResource = async (req, res) => {
   try {
     const { id } = req.params;
-    const { uid, reason } = req.body;
+    const { uid, reason } = req.body || {};
+
+    if (!uid) {
+      return res.status(400).json({ message: "uid is required" });
+    }
 
     const resource = await Resource.findById(id);
     if (!resource) {

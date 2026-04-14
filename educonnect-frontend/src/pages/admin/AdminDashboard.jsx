@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
-import StatCard from "../../components/admin/StatCard";
+import { BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 const API = "http://localhost:5000";
 
@@ -30,6 +30,19 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchStats();
   }, []);
+  
+  const data = [
+  { name: "Users", value: stats.users },
+  { name: "Posts", value: stats.posts },
+  { name: "Events", value: stats.events },
+];
+
+<BarChart width={400} height={300} data={data}>
+  <XAxis dataKey="name" />
+  <YAxis />
+  <Tooltip />
+  <Bar dataKey="value" />
+</BarChart>
 
   return (
     <AdminLayout>

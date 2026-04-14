@@ -5,6 +5,8 @@ const applicationSchema = new mongoose.Schema(
     jobId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Job",
+      required: true,
+      index: true,
     },
     userUid: {
       type: String, // using your UID system

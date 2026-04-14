@@ -8,6 +8,12 @@ import { auth } from "./utils/firebase";
 import { API_BASE_URL } from "./utils/apiConfig";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPosts from "./pages/admin/AdminPosts";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminNotification from "./pages/admin/AdminNotification";
+import AdminResource from "./pages/admin/AdminResource";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const ProtectedRoute = ({ user, children }) => {
   const location = useLocation();
@@ -123,7 +129,14 @@ function App() {
       />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/auth"} replace />} />
       <Route path="/admin" element={<AdminDashboard />} />
-    </Routes>
+      <Route path="/admin/users" element={<AdminUsers />} />
+      <Route path="/admin/posts" element={<AdminPosts />} />
+      <Route path="/admin/events" element={<AdminEvents />} />
+      <Route path="/admin/notifications" element={<AdminNotification />} />
+      <Route path="/admin/resources" element={<AdminResource />} />
+      <Route path="/admin/settings" element={<AdminSettings />} />
+
+      </Routes>
   );
 }
 

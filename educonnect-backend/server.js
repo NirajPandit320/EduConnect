@@ -43,40 +43,44 @@ const removeSocketForUser = (uid, socketId) => {
   }
 };
 
+const registerUserSocket = async (uid, socket, shouldPersistOnline = false) => {
+  if (!uid) return;
+
+  socket.join(uid);
+  socket.userId = uid;
+  addSocketForUser(uid, socket.id);
+
+  if (shouldPersistOnline) {
+    await User.findOneAndUpdate({ uid }, { isOnline: true });
+  }
+
+  io.emit("online_users", Object.keys(onlineUsers));
+};
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   socket.on("join", (uid) => {
     if (!uid) return;
 
-    socket.join(uid);
-    socket.userId = uid;
-    addSocketForUser(uid, socket.id);
-    console.log(`Joined private room: ${uid}`);
+    registerUserSocket(uid, socket).catch((err) => {
+      console.log("Join error:", err.message);
+    });
   });
 
   socket.on("register", (uid) => {
     if (!uid) return;
 
-    socket.join(uid);
-    socket.userId = uid;
-    addSocketForUser(uid, socket.id);
-    io.emit("online_users", Object.keys(onlineUsers));
+    registerUserSocket(uid, socket).catch((err) => {
+      console.log("Register error:", err.message);
+    });
   });
 
   //  USER ONLINE STATUS (existing)
 
   socket.on("userOnline", async (uid) => {
     try {
-      socket.userId = uid;
-
-      socket.join(uid);
-      addSocketForUser(uid, socket.id);
-
-      await User.findOneAndUpdate({ uid }, { isOnline: true });
-
-      //  broadcast online users
-      io.emit("online_users", Object.keys(onlineUsers));
+      await registerUserSocket(uid, socket, true);
 
       console.log(`User ${uid} is online`);
     } catch (err) {
@@ -180,20 +184,18 @@ io.on("connection", (socket) => {
   socket.on("disconnect", async () => {
     console.log("User disconnected:", socket.id);
 
-    //  remove from private chat tracking
-    for (let uid in onlineUsers) {
-      const hadSocket = onlineUsers[uid]?.has(socket.id);
-      removeSocketForUser(uid, socket.id);
+    const uid = socket.userId;
+    if (!uid) return;
 
-      if (hadSocket && !onlineUsers[uid]) {
-        io.emit("online_users", Object.keys(onlineUsers));
+    removeSocketForUser(uid, socket.id);
+    io.emit("online_users", Object.keys(onlineUsers));
 
-        try {
-          await User.findOneAndUpdate({ uid }, { isOnline: false });
-          console.log(`User ${uid} is offline`);
-        } catch (err) {
-          console.log("Disconnect error:", err.message);
-        }
+    if (!onlineUsers[uid]) {
+      try {
+        await User.findOneAndUpdate({ uid }, { isOnline: false });
+        console.log(`User ${uid} is offline`);
+      } catch (err) {
+        console.log("Disconnect error:", err.message);
       }
     }
   });
