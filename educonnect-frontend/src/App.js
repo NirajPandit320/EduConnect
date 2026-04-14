@@ -11,8 +11,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPosts from "./pages/admin/AdminPosts";
 import AdminEvents from "./pages/admin/AdminEvents";
-import AdminNotification from "./pages/admin/AdminNotification";
-import AdminResource from "./pages/admin/AdminResource";
+import AdminNotification from "./pages/admin/AdminNotifications";
+import AdminResource from "./pages/admin/AdminResources";
 import AdminSettings from "./pages/admin/AdminSettings";
 
 const ProtectedRoute = ({ user, children }) => {
