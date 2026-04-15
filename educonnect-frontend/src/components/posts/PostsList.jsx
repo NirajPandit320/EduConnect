@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import PostComposer from "./PostComposer";
+import ProgressBar from "../common/ProgressBar";
+import SkeletonCard from "../common/SkeletonCard";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
 const PostsList = () => {
@@ -235,14 +237,17 @@ const PostsList = () => {
 
   return (
     <div className="posts-container">
+      {/* Progress Bar for initial load */}
+      <ProgressBar visible={loading} duration={2000} />
 
       <PostComposer onPostCreated={fetchPosts} />
 
-      {/* Loading State */}
+      {/* Loading State - Skeleton Cards */}
       {loading && (
-        <div className="posts-loading">
-          <div className="spinner"></div>
-          <p>Loading posts...</p>
+        <div className="posts-feed">
+          {[1, 2, 3].map((i) => (
+            <SkeletonCard key={`skeleton-${i}`} type="post" />
+          ))}
         </div>
       )}
 
@@ -267,7 +272,7 @@ const PostsList = () => {
         </div>
       ) : null}
 
-      {/* Posts Feed */}
+      {/* Posts Feed - Success State */}
       {!loading && !error && posts.length > 0 && (
         <div className="posts-feed">
           {posts.filter((post) => !hiddenPostIds.includes(post?._id)).map((post) => {

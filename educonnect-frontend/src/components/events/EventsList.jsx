@@ -3,6 +3,8 @@ import { useSelector } from "react-redux";
 import CreateEvent from "./CreateEvent";
 import ParticipantsModal from "./ParticipantsModal";
 import EventChat from "./EventChat";
+import ProgressBar from "../common/ProgressBar";
+import SkeletonCard from "../common/SkeletonCard";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
 const EventsList = () => {
@@ -105,16 +107,19 @@ const EventsList = () => {
 
   return (
     <div className="events-container">
+      {/* Progress Bar for initial load */}
+      <ProgressBar visible={loading} duration={2000} />
 
       <CreateEvent onCreated={fetchEvents} />
 
       <h2 className="events-title">🎉 Events & Gatherings</h2>
 
-      {/* Loading State */}
+      {/* Loading State - Skeleton Cards */}
       {loading && (
-        <div className="events-loading">
-          <div className="spinner"></div>
-          <p>Loading events...</p>
+        <div className="events-grid">
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCard key={`skeleton-${i}`} type="event" />
+          ))}
         </div>
       )}
 
