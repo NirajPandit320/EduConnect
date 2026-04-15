@@ -12,10 +12,36 @@ connectDB();
 // START SERVER
 const server = http.createServer(app);
 
-// Initialize socket.io
+// ============================================
+// Socket.io CORS Configuration (matching backend)
+// ============================================
+const socketCorsOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+  "http://127.0.0.1:3000",
+  "https://edu-connector.netlify.app",
+];
+
+if (process.env.NETLIFY_URL) {
+  socketCorsOrigins.push(process.env.NETLIFY_URL);
+}
+
+if (process.env.CORS_ORIGINS) {
+  const additionalOrigins = process.env.CORS_ORIGINS.split(",").map((origin) =>
+    origin.trim()
+  );
+  socketCorsOrigins.push(...additionalOrigins);
+}
+
+console.log("🔌 Socket.io CORS Allowed Origins:", socketCorsOrigins);
+
+// Initialize socket.io with proper CORS
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: socketCorsOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 

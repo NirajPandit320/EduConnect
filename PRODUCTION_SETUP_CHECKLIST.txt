@@ -1,0 +1,205 @@
+========================================
+PRODUCTION DEPLOYMENT SETUP - CHECKLIST
+========================================
+
+FRONTEND (Netlify) - Environment Variables:
+===========================================
+Deploy Settings → Build & Deploy → Environment
+
+Required variables:
+  REACT_APP_API_URL=https://educonnect-yrj7.onrender.com
+  REACT_APP_SOCKET_URL=https://educonnect-yrj7.onrender.com
+
+These should be set BEFORE deploying.
+Frontend uses: .env.production when deployed.
+
+BACKEND (Render) - Environment Variables:
+==========================================
+Dashboard → Sites → educonnect → Environment
+
+Required variables:
+  NODE_ENV=production
+  PORT=5000
+  MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/educonnect
+  ADMIN_EMAIL=admin@educonnect.com
+  ADMIN_PASSWORD=Gayatri@#$123321
+  NETLIFY_URL=https://edu-connector.netlify.app
+  FIREBASE_API_KEY=<your_key>
+  FIREBASE_AUTH_DOMAIN=<your_auth_domain>
+  FIREBASE_PROJECT_ID=<your_project>
+  FIREBASE_STORAGE_BUCKET=<your_bucket>
+  FIREBASE_MESSAGING_SENDER_ID=<your_sender_id>
+  FIREBASE_APP_ID=<your_app_id>
+
+Backend automatically:
+  1. Reads .env.production if NODE_ENV=production
+  2. Loads NETLIFY_URL to CORS whitelist
+  3. Adds backend URL for Socket.io CORS
+
+========================================
+CORS CONFIGURATION ON RENDER
+========================================
+
+Backend auto-allows:
+  ✓ http://localhost:3000 (hardcoded for testing)
+  ✓ https://edu-connector.netlify.app (hardcoded)
+  ✓ NETLIFY_URL env variable (dynamic)
+  ✓ CORS_ORIGINS env variable (comma-separated)
+
+If Netlify URL changes:
+  1. Update RENDER_NETLIFY_URL env variable
+  2. OR add to CORS_ORIGINS (comma-separated)
+  3. Redeploy backend
+
+========================================
+FRONTEND DEPLOYMENT STEPS
+========================================
+
+1. Ensure .env.production exists:
+   REACT_APP_API_URL=https://educonnect-yrj7.onrender.com
+   REACT_APP_SOCKET_URL=https://educonnect-yrj7.onrender.com
+
+2. Set Netlify environment variables:
+   REACT_APP_API_URL=https://educonnect-yrj7.onrender.com
+   REACT_APP_SOCKET_URL=https://educonnect-yrj7.onrender.com
+
+3. Deploy to Netlify:
+   npm run build
+   netlify deploy --prod
+
+4. Test at: https://edu-connector.netlify.app
+
+========================================
+BACKEND DEPLOYMENT STEPS
+========================================
+
+1. Ensure .env.production exists:
+   NODE_ENV=production
+   NETLIFY_URL=https://edu-connector.netlify.app
+   (MongoDB, Firebase creds, Admin creds)
+
+2. Set Render environment variables:
+   (Same as .env.production)
+
+3. Deploy:
+   git push render main
+   (Automatic deployment on Render)
+
+4. Check Render logs for:
+   "Server running on port 5000"
+   "Mongo Connected ✅"
+   "✅ CORS Allowed Origins: [...]"
+
+========================================
+TESTING PRODUCTION
+========================================
+
+1. Go to: https://edu-connector.netlify.app
+2. Admin login:
+   Email: admin@educonnect.com
+   Password: Gayatri@#$123321
+3. Check browser console (F12):
+   [Admin API] GET https://educonnect-yrj7.onrender.com/api/admin/stats
+   [Admin API] Response - Status 200
+4. Dashboard should show stats
+
+If "Failed to fetch":
+  1. Check Render logs:
+     https://dashboard.render.com -> your-app -> Logs
+  2. Look for CORS errors:
+     "Origin not allowed"
+  3. Look for auth errors:
+     "Authorization header missing"
+  4. Check network tab (F12):
+     Status code of stats request
+     Response headers
+     Response body
+
+========================================
+COMMON ISSUES & FIXES
+========================================
+
+Issue: CORS Error in browser
+Fix:
+  1. Check NETLIFY_URL in Render .env
+  2. Verify frontend .env.production has correct API URL
+  3. Check Render logs for "BLOCKED: ..." message
+  4. Redeploy both frontend and backend
+
+Issue: 401 Unauthorized on stats request
+Fix:
+  1. Verify admin login worked (check localStorage)
+  2. Check Browser Network tab:
+     Headers should include:
+       Authorization: <token>
+       X-Admin-Session: <token>
+  3. If headers missing, frontend auth issue
+  4. If headers present but 401, backend auth issue
+
+Issue: 404 Not Found on /api/admin/stats
+Fix:
+  1. Verify backend has admin routes registered
+  2. Check Render logs for route registration
+  3. Ensure backend deployed correctly
+
+Issue: Blank page or "Loading..."
+Fix:
+  1. Check Netlify deployment logs
+  2. Check if .env.production was used
+  3. Verify Netlify environment variables set
+  4. Hard refresh: Ctrl+Shift+R
+
+========================================
+PRODUCTION DEBUGGING
+========================================
+
+Browser Console Logs (F12):
+  [Admin API] GET https://educonnect-yrj7.onrender.com/api/admin/stats
+  [Admin API] Response - Status 200
+  [Dashboard] Stats received: {...}
+
+Render Backend Logs:
+  📍 Incoming request origin: https://edu-connector.netlify.app
+  ✓ Allowed: https://edu-connector.netlify.app
+  [Admin API Response]
+
+Network Tab (F12):
+  Request URL: https://educonnect-yrj7.onrender.com/api/admin/stats
+  Status: 200
+  Headers:
+    Authorization: Bearer <token>
+    X-Admin-Session: <token>
+    Content-Type: application/json
+
+========================================
+ENVIRONMENT FILE TEMPLATES
+========================================
+
+Frontend (.env.production):
+  REACT_APP_API_URL=https://educonnect-yrj7.onrender.com
+  REACT_APP_SOCKET_URL=https://educonnect-yrj7.onrender.com
+
+Backend (.env.production):
+  NODE_ENV=production
+  PORT=5000
+  MONGO_URI=mongodb+srv://...
+  NETLIFY_URL=https://edu-connector.netlify.app
+  ADMIN_EMAIL=admin@educonnect.com
+  ADMIN_PASSWORD=...
+  FIREBASE_*=...
+
+========================================
+KEY POINTS FOR SUCCESS
+========================================
+
+✓ Frontend .env.production has correct API URL
+✓ Backend .env.production has NODE_ENV=production
+✓ Backend .env has NETLIFY_URL=https://edu-connector.netlify.app
+✓ Netlify environment variables match .env.production
+✓ Render environment variables match .env.production
+✓ CORS headers allow Netlify domain
+✓ Auth headers (Authorization, X-Admin-Session) sent
+✓ Admin login stores token in localStorage
+✓ Both frontend and backend deployed
+
+========================================

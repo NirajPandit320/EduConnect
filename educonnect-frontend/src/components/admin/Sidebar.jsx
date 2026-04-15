@@ -1,57 +1,55 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { clearAdminSession } from "../../utils/adminHelper";
+import "../../styles/admin.css";
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
-    clearAdminSession();
-    navigate("/auth");
+    if (window.confirm("Are you sure you want to logout?")) {
+      clearAdminSession();
+      navigate("/auth");
+    }
   };
 
+  const isActive = (path) => location.pathname === path;
+
+  const menuItems = [
+    { path: "/admin", label: "📊 Dashboard", icon: "📊" },
+    { path: "/admin/users", label: "👥 Users", icon: "👥" },
+    { path: "/admin/posts", label: "📝 Posts", icon: "📝" },
+    { path: "/admin/events", label: "📅 Events", icon: "📅" },
+    { path: "/admin/jobs", label: "💼 Jobs", icon: "💼" },
+    { path: "/admin/resources", label: "📚 Resources", icon: "📚" },
+    { path: "/admin/notifications", label: "📢 Notifications", icon: "📢" },
+  ];
+
   return (
-    <div style={{
-      width: "220px",
-      height: "100vh",
-      background: "#6C4DF6",
-      color: "white",
-      padding: "20px",
-      display: "flex",
-      flexDirection: "column"
-    }}>
-      <h2>Admin</h2>
-
-      <ul style={{ listStyle: "none", padding: 0, flex: 1 }}>
-        <li><Link to="/admin" style={link}>Dashboard</Link></li>
-        <li><Link to="/admin/posts" style={link}>Posts</Link></li>
-        <li><Link to="/admin/events" style={link}>Events</Link></li>
-        <li><Link to="/admin/users" style={link}>Users</Link></li>
+    <div className="admin-sidebar">
+      <h2>🎓 EduConnect Admin</h2>
+      <ul className="admin-sidebar-menu">
+        {menuItems.map((item) => (
+          <li key={item.path}>
+            <Link
+              to={item.path}
+              className={isActive(item.path) ? "active" : ""}
+            >
+              <span style={{ fontSize: "18px" }}>{item.icon}</span>
+              {item.label}
+            </Link>
+          </li>
+        ))}
       </ul>
-
       <button
         onClick={handleLogout}
-        style={{
-          background: "#fff",
-          color: "#6C4DF6",
-          border: "none",
-          padding: "10px 15px",
-          borderRadius: "5px",
-          cursor: "pointer",
-          fontWeight: "bold",
-          marginTop: "auto"
-        }}
+        className="btn admin-sidebar-logout"
+        style={{ width: "100%" }}
       >
-        Logout
+        🚪 Logout
       </button>
     </div>
   );
-};
-
-const link = {
-  color: "white",
-  textDecoration: "none",
-  display: "block",
-  margin: "10px 0"
 };
 
 export default Sidebar;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
@@ -8,26 +8,26 @@ const ProfileView = () => {
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user?.uid) return;
 
     const response = await fetch(`${API_BASE_URL}/api/users/profile/${user.uid}`);
     const data = await response.json();
     setProfile(data?.user || null);
-  };
+  }, [user?.uid]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user?.uid) return;
 
     const response = await fetch(`${API_BASE_URL}/api/users/profile/${user.uid}/stats`);
     const data = await response.json();
     setStats(data?.stats || null);
-  };
+  }, [user?.uid]);
 
   useEffect(() => {
     fetchProfile();
     fetchStats();
-  }, [user?.uid]);
+  }, [fetchProfile, fetchStats]);
 
   if (!profile) return <p>Loading profile...</p>;
 

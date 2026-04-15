@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
@@ -10,15 +10,15 @@ const Leaderboard = () => {
   const [category, setCategory] = useState("overall");
   const [personalRank, setPersonalRank] = useState(null);
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     const response = await fetch(
       `${API_BASE_URL}/api/leaderboard?period=${period}&category=${category}`
     );
     const data = await response.json();
     setEntries(Array.isArray(data) ? data : []);
-  };
+  }, [period, category]);
 
-  const fetchPersonalRank = async () => {
+  const fetchPersonalRank = useCallback(async () => {
     if (!user?.uid) return;
 
     const response = await fetch(`${API_BASE_URL}/api/leaderboard/${user.uid}`);
@@ -27,15 +27,15 @@ const Leaderboard = () => {
     if (response.ok) {
       setPersonalRank(data);
     }
-  };
+  }, [user?.uid]);
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [period, category]);
+  }, [fetchLeaderboard]);
 
   useEffect(() => {
     fetchPersonalRank();
-  }, [user?.uid]);
+  }, [fetchPersonalRank]);
 
   return (
     <div className="leaderboard-page">

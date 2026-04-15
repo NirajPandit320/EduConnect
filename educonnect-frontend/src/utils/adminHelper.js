@@ -67,27 +67,50 @@ export const adminFetch = async (path, options = {}) => {
   }
 
   const { headers = {}, method = "GET", body } = options;
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token,
-      "X-Admin-Session": token,
-      ...(email ? { email } : {}),
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const fullUrl = `${API_BASE_URL}${path}`;
 
-  const result = await response.json().catch(() => ({}));
+  // Log request details for debugging
+  console.log(`[Admin API] ${method} ${fullUrl}`);
+
+  let response;
+  try {
+    response = await fetch(fullUrl, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+        "X-Admin-Session": token,
+        ...(email ? { email } : {}),
+        ...headers,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (fetchError) {
+    console.error(`[Admin API] Network Error - ${method} ${fullUrl}:`, fetchError);
+    throw new Error(`Network error: ${fetchError.message}`);
+  }
+
+  let result;
+  try {
+    result = await response.json();
+  } catch (parseError) {
+    console.error(`[Admin API] JSON Parse Error - Status ${response.status}:`, parseError);
+    result = { error: "Invalid response format" };
+  }
+
+  // Log response details
+  console.log(`[Admin API] Response - Status ${response.status}`);
 
   if (response.status === 401) {
     clearAdminSession();
-    throw new Error(result.message || "Unauthorized. Please log in again.");
+    const message = result?.message || "Unauthorized. Please log in again.";
+    throw new Error(message);
   }
 
   if (!response.ok) {
-    throw new Error(result.message || "Admin request failed");
+    const errorMessage = result?.message || result?.error || "Request failed";
+    console.error(`[Admin API] Error - ${response.status}: ${errorMessage}`);
+    throw new Error(errorMessage);
   }
 
   return result;

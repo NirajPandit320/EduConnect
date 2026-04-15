@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import Modal from "../../components/admin/Modal";
 import ConfirmModal from "../../components/admin/ConfirmModal";
-import { fetchAllEvents, createEvent, deleteEvent } from "../../utils/adminAPI";
+import { fetchAllJobs, createJob, deleteJob } from "../../utils/adminAPI";
 import "../../styles/admin.css";
 
-const AdminEvents = () => {
-  const [events, setEvents] = useState([]);
+const AdminJobs = () => {
+  const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,34 +14,34 @@ const AdminEvents = () => {
   const [creating, setCreating] = useState(false);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
-    eventId: null,
-    eventTitle: null,
+    jobId: null,
+    jobTitle: null,
   });
   const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
+    company: "",
     description: "",
-    date: "",
-    time: "",
+    salary: "",
     location: "",
-    maxAttendees: "",
+    jobType: "Full-time",
   });
 
-  const fetchEvents = async () => {
+  const fetchJobs = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchAllEvents(1, 20);
-      setEvents(response.events || []);
+      const response = await fetchAllJobs(1, 20);
+      setJobs(response.jobs || []);
     } catch (err) {
-      setError(err.message || "Failed to fetch events");
+      setError(err.message || "Failed to fetch jobs");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchJobs();
   }, []);
 
   const handleInputChange = (e) => {
@@ -49,58 +49,53 @@ const AdminEvents = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateEvent = async (e) => {
+  const handleCreateJob = async (e) => {
     e.preventDefault();
     setCreating(true);
     try {
-      const eventData = {
-        ...formData,
-        eventDate: `${formData.date}T${formData.time}`,
-      };
-
-      await createEvent(eventData);
+      await createJob(formData);
       setShowCreateModal(false);
       setFormData({
         title: "",
+        company: "",
         description: "",
-        date: "",
-        time: "",
+        salary: "",
         location: "",
-        maxAttendees: "",
+        jobType: "Full-time",
       });
-      await fetchEvents();
+      await fetchJobs();
     } catch (err) {
-      setError(err.message || "Failed to create event");
+      setError(err.message || "Failed to create job");
     } finally {
       setCreating(false);
     }
   };
 
-  const handleDeleteClick = (eventId, eventTitle) => {
+  const handleDeleteClick = (jobId, jobTitle) => {
     setConfirmModal({
       isOpen: true,
-      eventId,
-      eventTitle,
+      jobId,
+      jobTitle,
     });
   };
 
   const handleConfirmDelete = async () => {
     setDeleting(true);
     try {
-      await deleteEvent(confirmModal.eventId);
-      setEvents(events.filter((e) => e._id !== confirmModal.eventId));
-      setConfirmModal({ isOpen: false, eventId: null, eventTitle: null });
+      await deleteJob(confirmModal.jobId);
+      setJobs(jobs.filter((j) => j._id !== confirmModal.jobId));
+      setConfirmModal({ isOpen: false, jobId: null, jobTitle: null });
     } catch (err) {
-      setError(err.message || "Failed to delete event");
+      setError(err.message || "Failed to delete job");
     } finally {
       setDeleting(false);
     }
   };
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.location?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredJobs = jobs.filter(
+    (job) =>
+      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -108,7 +103,7 @@ const AdminEvents = () => {
       <AdminLayout>
         <div className="loading">
           <div className="loading-spinner"></div>
-          <p style={{ marginTop: "16px" }}>Loading events...</p>
+          <p style={{ marginTop: "16px" }}>Loading jobs...</p>
         </div>
       </AdminLayout>
     );
@@ -117,8 +112,8 @@ const AdminEvents = () => {
   return (
     <AdminLayout>
       <div className="admin-header">
-        <h1>Events Management</h1>
-        <p>Manage all events and handle event requests</p>
+        <h1>Jobs & Placements</h1>
+        <p>Manage all job postings and placements</p>
       </div>
 
       {error && (
@@ -129,12 +124,12 @@ const AdminEvents = () => {
 
       <div className="table-container">
         <div className="table-header">
-          <h2>All Events ({filteredEvents.length})</h2>
+          <h2>All Jobs ({filteredJobs.length})</h2>
           <div className="table-toolbar">
             <input
               type="text"
               className="search-input"
-              placeholder="Search events..."
+              placeholder="Search jobs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ minWidth: "250px" }}
@@ -143,70 +138,70 @@ const AdminEvents = () => {
               onClick={() => setShowCreateModal(true)}
               className="btn btn-primary"
             >
-              ➕ Create Event
+              ➕ Post Job
             </button>
-            <button onClick={fetchEvents} className="btn btn-secondary">
+            <button onClick={fetchJobs} className="btn btn-secondary">
               🔄 Refresh
             </button>
           </div>
         </div>
 
-        {filteredEvents.length === 0 ? (
+        {filteredJobs.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📅</div>
-            <h3>No events found</h3>
+            <div className="empty-state-icon">💼</div>
+            <h3>No jobs found</h3>
             <p>
               {searchTerm
                 ? "Try adjusting your search filters"
-                : "No events in the system"}
+                : "No jobs posted in the system"}
             </p>
           </div>
         ) : (
           <table>
             <thead>
               <tr>
-                <th>Title</th>
+                <th>Job Title</th>
+                <th>Company</th>
                 <th>Location</th>
-                <th>Date</th>
-                <th>Attendees</th>
-                <th>Max Capacity</th>
-                <th>Status</th>
+                <th>Type</th>
+                <th>Salary</th>
+                <th>Posted</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredEvents.map((event) => (
-                <tr key={event._id}>
+              {filteredJobs.map((job) => (
+                <tr key={job._id}>
                   <td>
-                    <strong>{event.title || "Untitled"}</strong>
+                    <strong>{job.title || "Untitled"}</strong>
                   </td>
-                  <td>{event.location || "N/A"}</td>
-                  <td>
-                    {event.eventDate
-                      ? new Date(event.eventDate).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                  <td>{event.attendees?.length || 0}</td>
-                  <td>{event.maxAttendees || "Unlimited"}</td>
+                  <td>{job.company || "N/A"}</td>
+                  <td>{job.location || "N/A"}</td>
                   <td>
                     <span
                       style={{
-                        background: "#ECFDF5",
-                        color: "#065F46",
-                        padding: "4px 12px",
+                        background: "#EFF6FF",
+                        color: "#0C2340",
+                        padding: "4px 10px",
                         borderRadius: "4px",
                         fontSize: "12px",
                         fontWeight: "600",
                       }}
                     >
-                      ✓ Active
+                      {job.jobType || "Full-time"}
                     </span>
+                  </td>
+                  <td>{job.salary ? `₹${job.salary}` : "N/A"}</td>
+                  <td>
+                    {job.createdAt
+                      ? new Date(job.createdAt).toLocaleDateString()
+                      : "N/A"}
                   </td>
                   <td>
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() =>
-                        handleDeleteClick(event._id, event.title || "Event")
+                        handleDeleteClick(job._id, job.title || "Job")
                       }
                     >
                       🗑️ Delete
@@ -221,7 +216,7 @@ const AdminEvents = () => {
 
       <Modal
         isOpen={showCreateModal}
-        title="Create New Event"
+        title="Post New Job"
         onClose={() => setShowCreateModal(false)}
         size="large"
         footer={
@@ -235,17 +230,17 @@ const AdminEvents = () => {
             </button>
             <button
               className="btn btn-primary"
-              onClick={handleCreateEvent}
+              onClick={handleCreateJob}
               disabled={creating}
             >
-              {creating ? "Creating..." : "Create Event"}
+              {creating ? "Posting..." : "Post Job"}
             </button>
           </div>
         }
       >
-        <form onSubmit={handleCreateEvent}>
+        <form onSubmit={handleCreateJob}>
           <div className="form-group">
-            <label className="form-label">Event Title</label>
+            <label className="form-label">Job Title</label>
             <input
               type="text"
               name="title"
@@ -253,7 +248,20 @@ const AdminEvents = () => {
               value={formData.title}
               onChange={handleInputChange}
               required
-              placeholder="Enter event title"
+              placeholder="Enter job title"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Company</label>
+            <input
+              type="text"
+              name="company"
+              className="form-input"
+              value={formData.company}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter company name"
             />
           </div>
 
@@ -264,34 +272,8 @@ const AdminEvents = () => {
               className="form-textarea"
               value={formData.description}
               onChange={handleInputChange}
-              placeholder="Enter event description"
+              placeholder="Enter job description"
             />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <div className="form-group">
-              <label className="form-label">Date</label>
-              <input
-                type="date"
-                name="date"
-                className="form-input"
-                value={formData.date}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Time</label>
-              <input
-                type="time"
-                name="time"
-                className="form-input"
-                value={formData.time}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
@@ -309,27 +291,42 @@ const AdminEvents = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Max Attendees</label>
-              <input
-                type="number"
-                name="maxAttendees"
-                className="form-input"
-                value={formData.maxAttendees}
+              <label className="form-label">Job Type</label>
+              <select
+                name="jobType"
+                className="form-select"
+                value={formData.jobType}
                 onChange={handleInputChange}
-                placeholder="Leave empty for unlimited"
-              />
+              >
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+              </select>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Salary (Optional)</label>
+            <input
+              type="text"
+              name="salary"
+              className="form-input"
+              value={formData.salary}
+              onChange={handleInputChange}
+              placeholder="Enter salary range (e.g., 5,00,000 - 10,00,000)"
+            />
           </div>
         </form>
       </Modal>
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title="Delete Event"
-        message={`Are you sure you want to delete the event "${confirmModal.eventTitle}"? This action cannot be undone.`}
+        title="Delete Job"
+        message={`Are you sure you want to delete the job posting "${confirmModal.jobTitle}"? This action cannot be undone.`}
         onConfirm={handleConfirmDelete}
         onCancel={() =>
-          setConfirmModal({ isOpen: false, eventId: null, eventTitle: null })
+          setConfirmModal({ isOpen: false, jobId: null, jobTitle: null })
         }
         isLoading={deleting}
       />
@@ -337,4 +334,4 @@ const AdminEvents = () => {
   );
 };
 
-export default AdminEvents;
+export default AdminJobs;

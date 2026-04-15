@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
 
@@ -27,7 +27,7 @@ const ResourcesList = ({ refreshKey }) => {
   const [commentText, setCommentText] = useState({});
   const [editingResource, setEditingResource] = useState(null);
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     setLoading(true);
 
     try {
@@ -40,7 +40,7 @@ const ResourcesList = ({ refreshKey }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     setFilters((prev) => ({ ...prev, uid: user?.uid || "" }));
@@ -48,7 +48,7 @@ const ResourcesList = ({ refreshKey }) => {
 
   useEffect(() => {
     fetchResources();
-  }, [refreshKey, filters.q, filters.tag, filters.sort, filters.uid]);
+  }, [refreshKey, fetchResources]);
 
   const updateEngagement = async (resourceId, action, payload = {}) => {
     await fetch(`${API_BASE_URL}/api/resources/${resourceId}/${action}`, {

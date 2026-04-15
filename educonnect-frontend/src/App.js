@@ -12,6 +12,9 @@ import { isAdminLoggedIn } from "./utils/adminHelper";
 import AdminPosts from "./pages/admin/AdminPosts";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminJobs from "./pages/admin/AdminJobs";
+import AdminResources from "./pages/admin/AdminResources";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 
 const ProtectedRoute = ({ user, children }) => {
   const location = useLocation();
@@ -156,6 +159,30 @@ function App() {
         element={
           <ProtectedAdminRoute>
             <AdminUsers />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/jobs"
+        element={
+          <ProtectedAdminRoute>
+            <AdminJobs />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/resources"
+        element={
+          <ProtectedAdminRoute>
+            <AdminResources />
+          </ProtectedAdminRoute>
+        }
+      />
+      <Route
+        path="/admin/notifications"
+        element={
+          <ProtectedAdminRoute>
+            <AdminNotifications />
           </ProtectedAdminRoute>
         }
       />
