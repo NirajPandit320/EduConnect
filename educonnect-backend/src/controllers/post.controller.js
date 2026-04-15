@@ -39,18 +39,40 @@ exports.createPost = async (req, res) => {
       return sendError(res, "User not found", 404);
     }
 
-    // Process images
-    const images = await Promise.all(
+    // Process images with individual error handling
+    log.info("Processing images", { fileCount: imageFiles.length, uid });
+
+    const images = await Promise.allSettled(
       imageFiles
         .slice(0, 5)
-        .map((file) => getStoredFileReference(file, "educonnect/posts", "image"))
+        .map((file) =>
+          getStoredFileReference(file, "educonnect/posts", "image")
+            .catch(err => {
+              log.error("Individual file upload failed", {
+                filename: file.originalname,
+                error: err.message
+              });
+              return null;
+            })
+        )
     );
+
+    // Extract successful uploads, filter out failed ones
+    const uploadedImages = images
+      .filter(result => result.status === "fulfilled" && result.value)
+      .map(result => result.value);
+
+    log.info("Image upload complete", {
+      requested: imageFiles.length,
+      successful: uploadedImages.length,
+      failed: imageFiles.length - uploadedImages.length
+    });
 
     // Create post
     const newPost = await Post.create({
       uid,
       content: trimmedContent ? sanitizeText(trimmedContent) : "",
-      images,
+      images: uploadedImages,
       likes: [],
       comments: [],
     });
@@ -79,10 +101,14 @@ exports.createPost = async (req, res) => {
       }
     });
 
-    log.info("Post created", { postId: newPost._id, uid });
+    log.info("Post created", { postId: newPost._id, uid, imageCount: uploadedImages.length });
     return sendSuccess(res, newPost, "Post created successfully", 201);
   } catch (error) {
-    log.error("Create post error", error);
+    log.error("Create post error", {
+      message: error.message,
+      stack: error.stack,
+      uid: req.body?.uid
+    });
     return sendError(res, "Failed to create post", 500);
   }
 };
