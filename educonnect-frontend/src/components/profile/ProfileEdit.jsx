@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import { setUser } from "../../store/userSlice";
+import {
+  COURSE_OPTIONS,
+  getCourseYearOptions,
+  normalizeSkillsInput,
+  normalizeUrlInput,
+  skillsToInputValue,
+} from "../../utils/profileUtils";
 
 const ProfileEdit = () => {
   const { user } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
 
   const [form, setForm] = useState({
     name: "",
@@ -12,12 +21,13 @@ const ProfileEdit = () => {
     year: "",
     sapId: "",
     skills: "",
-    interests: "",
     githubUrl: "",
     linkedinUrl: "",
     resumeUrl: "",
   });
   const [status, setStatus] = useState("");
+
+  const yearOptions = getCourseYearOptions(form.branch);
 
   useEffect(() => {
     const load = async () => {
@@ -32,10 +42,9 @@ const ProfileEdit = () => {
         name: profile.name || "",
         bio: profile.bio || "",
         branch: profile.branch || "",
-        year: profile.year || "",
-        sapId: profile.sapId || "",
-        skills: Array.isArray(profile.skills) ? profile.skills.join(",") : "",
-        interests: Array.isArray(profile.interests) ? profile.interests.join(",") : "",
+        year: profile.year ? String(profile.year) : "",
+        sapId: profile.sapId ? String(profile.sapId) : "",
+        skills: skillsToInputValue(profile.skills),
         githubUrl: profile.githubUrl || "",
         linkedinUrl: profile.linkedinUrl || "",
         resumeUrl: profile.resumeUrl || "",
@@ -45,23 +54,35 @@ const ProfileEdit = () => {
     load();
   }, [user?.uid]);
 
+  useEffect(() => {
+    if (!form.branch) return;
+    if (!form.year) return;
+
+    const nextYear = Number(form.year);
+    if (yearOptions.includes(nextYear)) return;
+
+    setForm((prev) => ({ ...prev, year: "" }));
+  }, [form.branch, form.year, yearOptions]);
+
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   const save = async () => {
     if (!user?.uid) return;
 
     setStatus("Saving...");
 
     const payload = {
-      ...form,
-      skills: form.skills
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      interests: form.interests
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      year: form.year ? Number(form.year) : undefined,
-      sapId: form.sapId ? Number(form.sapId) : undefined,
+      name: form.name.trim(),
+      bio: form.bio.trim(),
+      branch: form.branch,
+      year: form.year ? Number(form.year) : null,
+      sapId: form.sapId.trim() ? Number(form.sapId.trim()) : null,
+      skills: normalizeSkillsInput(form.skills),
+      githubUrl: normalizeUrlInput(form.githubUrl),
+      linkedinUrl: normalizeUrlInput(form.linkedinUrl),
+      resumeUrl: normalizeUrlInput(form.resumeUrl),
     };
 
     const response = await fetch(`${API_BASE_URL}/api/users/profile/${user.uid}`, {
@@ -77,22 +98,92 @@ const ProfileEdit = () => {
       return;
     }
 
+    if (data?.user) {
+      dispatch(setUser(data.user));
+      window.dispatchEvent(
+        new CustomEvent("profile-updated", {
+          detail: data.user,
+        })
+      );
+    }
+
     setStatus("Profile updated");
   };
 
   return (
     <div className="profile-edit-card">
       <h3>Edit Profile</h3>
-      <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Name" />
-      <textarea value={form.bio} onChange={(event) => setForm({ ...form, bio: event.target.value })} placeholder="Bio" rows={3} />
-      <input value={form.branch} onChange={(event) => setForm({ ...form, branch: event.target.value })} placeholder="Branch" />
-      <input value={form.year} onChange={(event) => setForm({ ...form, year: event.target.value })} placeholder="Year" />
-      <input value={form.sapId} onChange={(event) => setForm({ ...form, sapId: event.target.value })} placeholder="SAP ID" />
-      <input value={form.skills} onChange={(event) => setForm({ ...form, skills: event.target.value })} placeholder="Skills (comma separated)" />
-      <input value={form.interests} onChange={(event) => setForm({ ...form, interests: event.target.value })} placeholder="Interests (comma separated)" />
-      <input value={form.githubUrl} onChange={(event) => setForm({ ...form, githubUrl: event.target.value })} placeholder="GitHub URL" />
-      <input value={form.linkedinUrl} onChange={(event) => setForm({ ...form, linkedinUrl: event.target.value })} placeholder="LinkedIn URL" />
-      <input value={form.resumeUrl} onChange={(event) => setForm({ ...form, resumeUrl: event.target.value })} placeholder="Resume URL" />
+      <input
+        value={form.name}
+        onChange={(event) => updateField("name", event.target.value)}
+        placeholder="Full Name"
+      />
+      <textarea
+        value={form.bio}
+        onChange={(event) => updateField("bio", event.target.value)}
+        placeholder="Bio"
+        rows={3}
+      />
+      <select
+        value={form.branch}
+        onChange={(event) => updateField("branch", event.target.value)}
+      >
+        <option value="">Select Course</option>
+        {COURSE_OPTIONS.map((course) => (
+          <option key={course.value} value={course.value}>
+            {course.label}
+          </option>
+        ))}
+      </select>
+      <select
+        value={form.year}
+        onChange={(event) => updateField("year", event.target.value)}
+        disabled={!form.branch}
+      >
+        <option value="">{form.branch ? "Select Year" : "Select Course First"}</option>
+        {yearOptions.map((year) => (
+          <option key={year} value={year}>
+            Year {year}
+          </option>
+        ))}
+      </select>
+      <input
+        value={form.sapId}
+        onChange={(event) => updateField("sapId", event.target.value)}
+        placeholder="SAP ID"
+        inputMode="numeric"
+        pattern="[0-9]*"
+      />
+      <input
+        value={form.skills}
+        onChange={(event) => updateField("skills", event.target.value)}
+        placeholder="Skills (space separated)"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck="false"
+        enterKeyHint="done"
+      />
+      <input
+        type="url"
+        value={form.githubUrl}
+        onChange={(event) => updateField("githubUrl", event.target.value)}
+        placeholder="GitHub URL"
+        inputMode="url"
+      />
+      <input
+        type="url"
+        value={form.linkedinUrl}
+        onChange={(event) => updateField("linkedinUrl", event.target.value)}
+        placeholder="LinkedIn URL"
+        inputMode="url"
+      />
+      <input
+        type="url"
+        value={form.resumeUrl}
+        onChange={(event) => updateField("resumeUrl", event.target.value)}
+        placeholder="Resume URL"
+        inputMode="url"
+      />
 
       <button type="button" onClick={save}>Save Profile</button>
       {status ? <p>{status}</p> : null}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import PostActionIcon from "./PostActionIcon";
 
 const PostComposer = ({ onPostCreated }) => {
   const { user } = useSelector((state) => state.user);
@@ -9,8 +10,8 @@ const PostComposer = ({ onPostCreated }) => {
   const [images, setImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
 
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
+  const handleImageChange = (event) => {
+    const files = Array.from(event.target.files);
 
     setImages(files);
     setPreviewImages(files.map((file) => URL.createObjectURL(file)));
@@ -39,8 +40,6 @@ const PostComposer = ({ onPostCreated }) => {
         setPreviewImages([]);
 
         onPostCreated();
-
-        // ADDED: Emit event to trigger dashboard stats refresh
         window.dispatchEvent(new Event("stats-refresh"));
       }
     } catch (error) {
@@ -51,7 +50,6 @@ const PostComposer = ({ onPostCreated }) => {
   return (
     <div className="composer-wrapper">
       <div className="post-composer">
-
         <div className="composer-header">
           <div className="composer-user">
             <div className="composer-avatar">
@@ -65,18 +63,18 @@ const PostComposer = ({ onPostCreated }) => {
         </div>
 
         <textarea
-          placeholder="What's on your mind? 💭"
+          placeholder="What's on your mind?"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(event) => setContent(event.target.value)}
           className="composer-textarea"
         />
 
         {previewImages.length > 0 && (
           <div className="preview-row">
-            <div className="preview-title">📸 Images ({previewImages.length})</div>
+            <div className="preview-title">Images ({previewImages.length})</div>
             <div className="preview-items">
-              {previewImages.map((img, i) => (
-                <div key={i} className="preview-item">
+              {previewImages.map((img, index) => (
+                <div key={index} className="preview-item">
                   <img src={img} alt="preview" />
                 </div>
               ))}
@@ -86,10 +84,7 @@ const PostComposer = ({ onPostCreated }) => {
 
         <div className="composer-toolbar">
           <label className="upload-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-              <circle cx="12" cy="13" r="4"></circle>
-            </svg>
+            <PostActionIcon name="image" className="post-eva-icon-image" />
             Add Image
             <input
               type="file"
@@ -101,11 +96,12 @@ const PostComposer = ({ onPostCreated }) => {
           </label>
 
           <button
+            type="button"
             className="post-btn"
             onClick={createPost}
             disabled={!content && previewImages.length === 0}
           >
-            <span className="post-btn-icon">✨</span>
+            <PostActionIcon name="post" className="post-eva-icon-post" />
             <span className="post-btn-text">Post</span>
           </button>
         </div>

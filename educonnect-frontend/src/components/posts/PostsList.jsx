@@ -4,9 +4,9 @@ import PostComposer from "./PostComposer";
 import ProgressBar from "../common/ProgressBar";
 import SkeletonCard from "../common/SkeletonCard";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import PostActionIcon from "./PostActionIcon";
 
 const PostsList = () => {
-
   const { user } = useSelector((state) => state.user);
 
   const [posts, setPosts] = useState([]);
@@ -20,6 +20,7 @@ const PostsList = () => {
   const [showComments, setShowComments] = useState({});
   const [hiddenPostIds, setHiddenPostIds] = useState([]);
   const [undoPostId, setUndoPostId] = useState("");
+  const [pendingLikeIds, setPendingLikeIds] = useState({});
   const hideTimeoutsRef = useRef({});
 
   const formatPostTimestamp = (value) => {
@@ -65,8 +66,6 @@ const PostsList = () => {
       }
 
       const data = await res.json();
-
-      // Extract posts array from response structure: { success, message, data: { posts, pagination } }
       const postsList = data?.data?.posts || [];
 
       if (!Array.isArray(postsList)) {
@@ -78,7 +77,7 @@ const PostsList = () => {
     } catch (err) {
       console.error("Failed to fetch posts:", err);
       setError(err.message || "Failed to load posts");
-      setPosts([]); // Fallback to empty array
+      setPosts([]);
     } finally {
       setLoading(false);
     }
@@ -89,9 +88,9 @@ const PostsList = () => {
   }, []);
 
   useEffect(() => {
+    const timeoutsToClean = hideTimeoutsRef.current;
+
     return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      const timeoutsToClean = hideTimeoutsRef.current;
       Object.values(timeoutsToClean).forEach((timeoutId) => {
         clearTimeout(timeoutId);
       });
@@ -108,7 +107,7 @@ const PostsList = () => {
         throw new Error(`Failed to delete post: ${res.statusText}`);
       }
 
-      setPosts(posts.filter((p) => p._id !== id));
+      setPosts((prev) => prev.filter((post) => post._id !== id));
     } catch (err) {
       console.error("Delete post error:", err);
       alert("Failed to delete post");
@@ -116,21 +115,78 @@ const PostsList = () => {
   };
 
   const toggleLike = async (id) => {
+    if (!user?.uid || pendingLikeIds[id]) return;
+
+    const currentPost = posts.find((post) => post?._id === id);
+    if (!currentPost) return;
+
+    const currentLikes = Array.isArray(currentPost.likes) ? currentPost.likes : [];
+    const alreadyLiked = currentLikes.includes(user.uid);
+    const optimisticLikes = alreadyLiked
+      ? currentLikes.filter((uid) => uid !== user.uid)
+      : [...currentLikes, user.uid];
+
+    setPendingLikeIds((prev) => ({ ...prev, [id]: true }));
+    setPosts((prev) =>
+      prev.map((post) =>
+        post._id === id
+          ? {
+              ...post,
+              likes: optimisticLikes,
+            }
+          : post
+      )
+    );
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/posts/${id}/like`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: user?.uid }),
+        body: JSON.stringify({ uid: user.uid }),
       });
 
       if (!res.ok) {
         throw new Error(`Failed to toggle like: ${res.statusText}`);
       }
 
-      fetchPosts();
+      const data = await res.json();
+      const updatedPost = data?.data;
+
+      if (updatedPost?._id) {
+        setPosts((prev) =>
+          prev.map((post) =>
+            post._id === id
+              ? {
+                  ...post,
+                  ...updatedPost,
+                  userName: post.userName,
+                  userEmail: post.userEmail,
+                }
+              : post
+          )
+        );
+      }
+
+      window.dispatchEvent(new Event("stats-refresh"));
     } catch (err) {
+      setPosts((prev) =>
+        prev.map((post) =>
+          post._id === id
+            ? {
+                ...post,
+                likes: currentLikes,
+              }
+            : post
+        )
+      );
       console.error("Toggle like error:", err);
       alert("Failed to like post");
+    } finally {
+      setPendingLikeIds((prev) => {
+        const nextState = { ...prev };
+        delete nextState[id];
+        return nextState;
+      });
     }
   };
 
@@ -151,7 +207,7 @@ const PostsList = () => {
         throw new Error(`Failed to add comment: ${res.statusText}`);
       }
 
-      setCommentText({ ...commentText, [id]: "" });
+      setCommentText((prev) => ({ ...prev, [id]: "" }));
       fetchPosts();
     } catch (err) {
       console.error("Add comment error:", err);
@@ -160,10 +216,10 @@ const PostsList = () => {
   };
 
   const toggleComments = (id) => {
-    setShowComments({
-      ...showComments,
-      [id]: !showComments[id],
-    });
+    setShowComments((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   const startEdit = (post) => {
@@ -183,7 +239,7 @@ const PostsList = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: editText,
-          uid: user?.uid
+          uid: user?.uid,
         }),
       });
 
@@ -192,12 +248,19 @@ const PostsList = () => {
       }
 
       const data = await res.json();
-
-      // Backend returns { success, message, data: post }
       const updatedPost = data?.data;
 
       setPosts((prev) =>
-        prev.map((p) => (p._id === id ? updatedPost : p))
+        prev.map((post) =>
+          post._id === id
+            ? {
+                ...post,
+                ...updatedPost,
+                userName: post.userName,
+                userEmail: post.userEmail,
+              }
+            : post
+        )
       );
 
       setEditingPostId(null);
@@ -237,12 +300,10 @@ const PostsList = () => {
 
   return (
     <div className="posts-container">
-      {/* Progress Bar for initial load */}
       <ProgressBar visible={loading} duration={2000} />
 
       <PostComposer onPostCreated={fetchPosts} />
 
-      {/* Loading State - Skeleton Cards */}
       {loading && (
         <div className="posts-feed">
           {[1, 2, 3].map((i) => (
@@ -251,38 +312,32 @@ const PostsList = () => {
         </div>
       )}
 
-      {/* Error State */}
       {error && !loading && (
         <div className="posts-error">
-          <div className="error-icon">⚠️</div>
+          <div className="error-icon">Warning</div>
           <h3>Failed to load posts</h3>
           <p>{error}</p>
-          <button onClick={fetchPosts} className="retry-btn">
-            🔄 Retry
+          <button type="button" onClick={fetchPosts} className="retry-btn">
+            Retry
           </button>
         </div>
       )}
 
-      {/* Empty State */}
       {!loading && !error && posts.length === 0 ? (
         <div className="empty-posts">
-          <div className="empty-icon">📝</div>
+          <div className="empty-icon">Posts</div>
           <h3>No posts yet</h3>
           <p>Be the first to share something!</p>
         </div>
       ) : null}
 
-      {/* Posts Feed - Success State */}
       {!loading && !error && posts.length > 0 && (
         <div className="posts-feed">
           {posts.filter((post) => !hiddenPostIds.includes(post?._id)).map((post) => {
-            // Defensive checks - ensure post data exists
             if (!post?._id) return null;
 
             return (
               <div key={post._id} className="post-card">
-
-                {/* POST HEADER */}
                 <div className="post-header">
                   <div className="post-user">
                     <div className="post-avatar">
@@ -296,49 +351,51 @@ const PostsList = () => {
 
                   <div className="post-menu">
                     <button
+                      type="button"
                       className="post-icon-btn hide"
                       onClick={() => hidePost(post._id)}
                       title="Hide post"
                     >
-                      🙈
+                      <PostActionIcon name="hide" className="post-eva-icon-hide" />
                     </button>
 
                     {post?.uid === user?.uid && (
                       <>
                         <button
+                          type="button"
                           className="post-icon-btn edit"
                           onClick={() => startEdit(post)}
                           title="Edit post"
                         >
-                          ✏️
+                          <PostActionIcon name="edit" className="post-eva-icon-edit" />
                         </button>
                         <button
+                          type="button"
                           className="post-icon-btn delete"
                           onClick={() => deletePost(post._id)}
                           title="Delete post"
                         >
-                          🗑️
+                          <PostActionIcon name="delete" className="post-eva-icon-delete" />
                         </button>
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* POST CONTENT */}
                 {editingPostId === post._id ? (
                   <div className="edit-mode">
                     <textarea
                       value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
+                      onChange={(event) => setEditText(event.target.value)}
                       className="edit-textarea"
                       placeholder="Edit your post..."
                     />
                     <div className="edit-actions">
-                      <button onClick={() => updatePost(post._id)} className="save-btn">
-                        ✅ Save
+                      <button type="button" onClick={() => updatePost(post._id)} className="save-btn">
+                        Save
                       </button>
-                      <button onClick={() => setEditingPostId(null)} className="cancel-btn">
-                        ❌ Cancel
+                      <button type="button" onClick={() => setEditingPostId(null)} className="cancel-btn">
+                        Cancel
                       </button>
                     </div>
                   </div>
@@ -346,19 +403,18 @@ const PostsList = () => {
                   <p className="post-content">{post?.content || ""}</p>
                 )}
 
-                {/* POST IMAGES */}
                 {post?.images?.length > 0 && (
                   <div className="post-images-container">
                     <div className={`post-images grid-${Math.min(post.images.length, 3)}`}>
-                      {post.images.map((img, i) => (
+                      {post.images.map((img, index) => (
                         <img
-                          key={i}
+                          key={index}
                           src={`${API_BASE_URL}/uploads/${img}`}
                           alt="post"
                           className="post-image"
-                          onError={(e) => {
+                          onError={(event) => {
                             console.warn("Image failed to load:", img);
-                            e.target.style.display = "none";
+                            event.target.style.display = "none";
                           }}
                         />
                       ))}
@@ -366,7 +422,6 @@ const PostsList = () => {
                   </div>
                 )}
 
-                {/* POST ACTIONS */}
                 <div className="post-actions-container">
                   <div className="post-stats">
                     <span className="stat">
@@ -379,24 +434,34 @@ const PostsList = () => {
 
                   <div className="post-actions">
                     <button
-                      className={`action-btn ${post?.likes?.includes(user?.uid) ? 'liked' : ''}`}
+                      type="button"
+                      className={`action-btn ${post?.likes?.includes(user?.uid) ? "liked" : ""}`}
                       onClick={() => toggleLike(post._id)}
+                      disabled={Boolean(pendingLikeIds[post._id])}
                     >
-                      <span className="action-icon">❤️</span>
+                      <PostActionIcon
+                        name="like"
+                        active={post?.likes?.includes(user?.uid)}
+                        className="post-eva-icon-like"
+                      />
                       <span className="action-label">Like</span>
                     </button>
 
                     <button
-                      className={`action-btn ${showComments[post._id] ? 'active' : ''}`}
+                      type="button"
+                      className={`action-btn ${showComments[post._id] ? "active" : ""}`}
                       onClick={() => toggleComments(post._id)}
                     >
-                      <span className="action-icon">💬</span>
+                      <PostActionIcon
+                        name="comment"
+                        active={showComments[post._id]}
+                        className="post-eva-icon-comment"
+                      />
                       <span className="action-label">Comment</span>
                     </button>
                   </div>
                 </div>
 
-                {/* COMMENTS SECTION */}
                 {showComments[post._id] && (
                   <div className="comment-section">
                     <div className="comments-divider"></div>
@@ -405,14 +470,14 @@ const PostsList = () => {
                       {post?.comments?.length === 0 ? (
                         <p className="no-comments">No comments yet. Be the first!</p>
                       ) : (
-                        post?.comments?.map((c, i) => (
-                          <div key={i} className="comment">
+                        post?.comments?.map((comment, index) => (
+                          <div key={index} className="comment">
                             <div className="comment-avatar">
-                              {c?.name?.charAt(0) || "U"}
+                              {comment?.name?.charAt(0) || "U"}
                             </div>
                             <div className="comment-content">
-                              <p className="comment-name">{c?.name || "User"}</p>
-                              <p className="comment-text">{c?.text || ""}</p>
+                              <p className="comment-name">{comment?.name || "User"}</p>
+                              <p className="comment-text">{comment?.text || ""}</p>
                             </div>
                           </div>
                         ))
@@ -423,16 +488,17 @@ const PostsList = () => {
                       <input
                         placeholder="Write a comment..."
                         value={commentText[post._id] || ""}
-                        onChange={(e) =>
-                          setCommentText({
-                            ...commentText,
-                            [post._id]: e.target.value,
-                          })
+                        onChange={(event) =>
+                          setCommentText((prev) => ({
+                            ...prev,
+                            [post._id]: event.target.value,
+                          }))
                         }
                         className="comment-field"
                       />
 
                       <button
+                        type="button"
                         onClick={() => addComment(post._id)}
                         className="comment-submit"
                         disabled={!commentText[post._id]?.trim()}
@@ -442,7 +508,6 @@ const PostsList = () => {
                     </div>
                   </div>
                 )}
-
               </div>
             );
           })}

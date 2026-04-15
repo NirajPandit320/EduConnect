@@ -23,6 +23,7 @@ import {
   FiAlertCircle,
   FiActivity,
 } from "react-icons/fi";
+import { getProfileCompletion } from "../../utils/profileUtils";
 
 // ADDED: Firestore imports
 import { db } from "../../utils/firebase";
@@ -129,7 +130,7 @@ const DashboardOverview = () => {
     { name: "Comments", value: stats?.totalComments || 0 },
   ];
 
-  const profileCompletion = user?.branch && user?.year ? 100 : 60;
+  const profileCompletion = getProfileCompletion(user);
 
   // ANIMATED NUMBER
   const AnimatedNumber = ({ value }) => {
@@ -264,24 +265,24 @@ const DashboardOverview = () => {
       <div className="profile-completion">
         <div className="profile-header">
           <h3><FiUserCheck /> Profile Completion</h3>
-          <span className="completion-percentage">{profileCompletion}%</span>
+          <span className="completion-percentage">{profileCompletion.percentage}%</span>
         </div>
 
         <div className="progress-bar">
           <div
             className="progress-fill"
-            style={{ width: `${profileCompletion}%` }}
+            style={{ width: `${profileCompletion.percentage}%` }}
           />
         </div>
 
         <p className="completion-text">
-          {profileCompletion === 100 ? (
+          {profileCompletion.percentage === 100 ? (
             <>
               <FiCheckCircle /> Profile is complete!
             </>
           ) : (
             <>
-              <FiAlertCircle /> Add your branch and year to complete your profile
+              <FiAlertCircle /> Complete {profileCompletion.missingFields.join(", ")} to reach 100%
             </>
           )}
         </p>

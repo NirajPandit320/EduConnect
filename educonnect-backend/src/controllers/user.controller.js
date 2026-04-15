@@ -3,6 +3,27 @@ const Post = require("../models/Post");
 const Event = require("../models/Event");
 const Resource = require("../models/Resource");
 
+const normalizeString = (value) => (typeof value === "string" ? value.trim() : value);
+
+const normalizeNumber = (value) => {
+  if (value === "" || value === null || value === undefined) {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+const normalizeStringArray = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+};
+
 // CREATE USER PROFILE (UNCHANGED)
 
 exports.createUserProfile = async (req, res) => {
@@ -193,14 +214,24 @@ exports.updateProfile = async (req, res) => {
 
     allowedUpdates.forEach((field) => {
       if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
+        if (field === "year" || field === "sapId") {
+          updates[field] = normalizeNumber(req.body[field]);
+          return;
+        }
+
+        if (field === "skills" || field === "interests") {
+          updates[field] = normalizeStringArray(req.body[field]);
+          return;
+        }
+
+        updates[field] = normalizeString(req.body[field]);
       }
     });
 
     const user = await User.findOneAndUpdate(
       { uid },
       updates,
-      { new: true }
+      { new: true, runValidators: true }
     ).select("-__v");
 
     if (!user) {

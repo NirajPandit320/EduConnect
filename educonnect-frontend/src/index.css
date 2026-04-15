@@ -5596,3 +5596,168 @@ body.dark-theme button {
   margin: 0;
   font-size: 16px;
 }
+
+/* ================= PROFILE + POST ICON PATCHES ================= */
+
+.profile-edit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-edit-card select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 8px;
+  background: #ffffff;
+}
+
+.profile-edit-card input:focus,
+.profile-edit-card textarea:focus,
+.profile-edit-card select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+}
+
+.post-icon-btn,
+.action-btn,
+.upload-btn,
+.post-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.post-icon-btn {
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.post-eva-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.post-eva-icon-svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.post-icon-btn:hover .post-eva-icon,
+.action-btn:hover .post-eva-icon,
+.upload-btn:hover .post-eva-icon,
+.post-btn:hover .post-eva-icon {
+  transform: translateY(-1px) scale(1.06);
+}
+
+.post-eva-icon-hide {
+  color: #7c3aed;
+}
+
+.post-eva-icon-edit {
+  color: #2563eb;
+}
+
+.post-eva-icon-delete {
+  color: #dc2626;
+}
+
+.post-eva-icon-image,
+.post-eva-icon-comment,
+.post-eva-icon-post {
+  color: inherit;
+}
+
+.post-eva-icon-like {
+  color: currentColor;
+}
+
+.post-eva-icon-like.is-active {
+  color: #ef4444;
+  animation: evaPulse 0.35s ease;
+}
+
+.post-eva-icon-comment.is-active {
+  color: #667eea;
+  animation: evaFloat 0.35s ease;
+}
+
+.post-icon-btn:hover .post-eva-icon-hide {
+  animation: evaFloat 0.35s ease;
+}
+
+.post-icon-btn:hover .post-eva-icon-edit {
+  animation: evaTilt 0.35s ease;
+}
+
+.post-icon-btn:hover .post-eva-icon-delete {
+  animation: evaShake 0.35s ease;
+}
+
+.action-btn:disabled {
+  opacity: 0.7;
+}
+
+@keyframes evaPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes evaFloat {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes evaTilt {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes evaShake {
+  0% {
+    transform: translateX(0);
+  }
+  33% {
+    transform: translateX(-1px);
+  }
+  66% {
+    transform: translateX(1px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
