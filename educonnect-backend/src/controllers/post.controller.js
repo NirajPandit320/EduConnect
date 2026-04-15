@@ -13,14 +13,23 @@ const { getStoredFileReference } = require("../utils/fileUpload");
 exports.createPost = async (req, res) => {
   try {
     const { uid, content } = req.body;
+    const imageFiles = req.files || [];
+    const trimmedContent = typeof content === "string" ? content.trim() : "";
 
     // Validation
-    const errors = validateRequiredFields({ uid, content }, ["uid", "content"]);
+    const errors = validateRequiredFields({ uid }, ["uid"]);
     if (errors.length) {
       return sendValidationError(res, "Validation failed", errors);
     }
 
-    if (!validateStringLength(content, 1, 5000)) {
+    if (!trimmedContent && imageFiles.length === 0) {
+      return sendValidationError(
+        res,
+        "Post must contain text or at least one image"
+      );
+    }
+
+    if (trimmedContent && !validateStringLength(trimmedContent, 1, 5000)) {
       return sendValidationError(res, "Post content must be between 1-5000 characters");
     }
 
@@ -31,7 +40,6 @@ exports.createPost = async (req, res) => {
     }
 
     // Process images
-    const imageFiles = req.files || [];
     const images = await Promise.all(
       imageFiles
         .slice(0, 5)
@@ -41,7 +49,7 @@ exports.createPost = async (req, res) => {
     // Create post
     const newPost = await Post.create({
       uid,
-      content: sanitizeText(content),
+      content: trimmedContent ? sanitizeText(trimmedContent) : "",
       images,
       likes: [],
       comments: [],

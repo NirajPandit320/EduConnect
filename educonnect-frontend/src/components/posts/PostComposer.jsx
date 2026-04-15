@@ -9,6 +9,7 @@ const PostComposer = ({ onPostCreated }) => {
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
+  const [isPosting, setIsPosting] = useState(false);
 
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files);
@@ -18,7 +19,7 @@ const PostComposer = ({ onPostCreated }) => {
   };
 
   const createPost = async () => {
-    if (!content && images.length === 0) return;
+    if ((!content || !content.trim()) && images.length === 0) return;
 
     const formData = new FormData();
     formData.append("uid", user.uid);
@@ -29,10 +30,13 @@ const PostComposer = ({ onPostCreated }) => {
     });
 
     try {
+      setIsPosting(true);
       const response = await fetch(`${API_BASE_URL}/api/posts`, {
         method: "POST",
         body: formData,
       });
+
+      const data = await response.json().catch(() => null);
 
       if (response.ok) {
         setContent("");
@@ -41,9 +45,14 @@ const PostComposer = ({ onPostCreated }) => {
 
         onPostCreated();
         window.dispatchEvent(new Event("stats-refresh"));
+      } else {
+        alert(data?.message || "Failed to create post");
       }
     } catch (error) {
       console.error("Error creating post:", error);
+      alert("Failed to create post");
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -99,10 +108,10 @@ const PostComposer = ({ onPostCreated }) => {
             type="button"
             className="post-btn"
             onClick={createPost}
-            disabled={!content && previewImages.length === 0}
+            disabled={isPosting || ((!content || !content.trim()) && previewImages.length === 0)}
           >
             <PostActionIcon name="post" className="post-eva-icon-post" />
-            <span className="post-btn-text">Post</span>
+            <span className="post-btn-text">{isPosting ? "Posting..." : "Post"}</span>
           </button>
         </div>
       </div>

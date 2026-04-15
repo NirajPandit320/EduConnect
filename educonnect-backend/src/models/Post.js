@@ -9,10 +9,17 @@ const postSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
-      minlength: [1, "Post content cannot be empty"],
+      default: "",
       maxlength: [5000, "Post content cannot exceed 5000 characters"],
       trim: true,
+      validate: {
+        validator: function (value) {
+          const hasContent = typeof value === "string" && value.trim().length > 0;
+          const hasImages = Array.isArray(this.images) && this.images.length > 0;
+          return hasContent || hasImages;
+        },
+        message: "Post must contain text or at least one image",
+      },
     },
     images: [
       {
