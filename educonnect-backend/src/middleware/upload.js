@@ -1,10 +1,11 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { isCloudinaryConfigured } = require("../utils/fileUpload");
 
 // Ensure uploads directory exists
 const uploadDir = "uploads";
-if (!fs.existsSync(uploadDir)) {
+if (!isCloudinaryConfigured && !fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
@@ -22,18 +23,19 @@ const FILE_SIZE_LIMITS = {
 };
 
 // Storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    // Generate unique filename: timestamp-random-originalname
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    const basename = path.basename(file.originalname, ext);
-    cb(null, `${basename}-${uniqueSuffix}${ext}`);
-  },
-});
+const storage = isCloudinaryConfigured
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        const basename = path.basename(file.originalname, ext);
+        cb(null, `${basename}-${uniqueSuffix}${ext}`);
+      },
+    });
 
 // File filter - validate type and size
 const fileFilter = (req, file, cb) => {

@@ -5,6 +5,7 @@ const { createAndEmitNotification } = require("./notification.controller");
 const { sendSuccess, sendError, sendValidationError } = require("../utils/response");
 const { validateRequiredFields, validateDateFormat } = require("../utils/validators");
 const log = require("../utils/logger");
+const { getStoredFileReference } = require("../utils/fileUpload");
 
 /**
  * CREATE EVENT - Admin only
@@ -35,6 +36,10 @@ exports.createEvent = async (req, res) => {
     }
 
     // Create event
+    const image = req.file
+      ? await getStoredFileReference(req.file, "educonnect/events", "image")
+      : "";
+
     const newEvent = new Event({
       title: title.trim(),
       description: description?.trim() || "",
@@ -42,7 +47,7 @@ exports.createEvent = async (req, res) => {
       endDate: parsedEndDate,
       location: location?.trim() || "",
       createdBy: uid,
-      image: req.file ? req.file.filename : "",
+      image,
       capacity: capacity ? parseInt(capacity) : null,
       eventStatus: "active",
       participants: [],
@@ -264,7 +269,9 @@ exports.updateEvent = async (req, res) => {
     if (eventStatus && ["active", "cancelled", "completed"].includes(eventStatus)) {
       event.eventStatus = eventStatus;
     }
-    if (req.file) event.image =req.file.filename;
+    if (req.file) {
+      event.image = await getStoredFileReference(req.file, "educonnect/events", "image");
+    }
 
     await event.save();
 

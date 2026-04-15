@@ -6,6 +6,7 @@ import EventChat from "./EventChat";
 import ProgressBar from "../common/ProgressBar";
 import SkeletonCard from "../common/SkeletonCard";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import { getMediaUrl } from "../../utils/media";
 
 const EventsList = () => {
   const { user } = useSelector((state) => state.user);
@@ -156,7 +157,7 @@ const EventsList = () => {
 
                     {event?.image && event.image !== "" && (
                       <img
-                        src={`${API_BASE_URL}/uploads/${event.image}`}
+                        src={getMediaUrl(event.image)}
                         alt="event"
                         className="event-banner"
                         onError={(e) => {

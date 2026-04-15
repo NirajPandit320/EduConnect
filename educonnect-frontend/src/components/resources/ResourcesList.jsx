@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import { getMediaUrl } from "../../utils/media";
 
 const buildQuery = (filters) => {
   const params = new URLSearchParams();
@@ -154,7 +155,7 @@ const ResourcesList = ({ refreshKey }) => {
                 {resource.fileUrl ? (
                   <div className="resource-links">
                     <a
-                      href={resource.fileUrl.startsWith("/uploads/") ? `${API_BASE_URL}${resource.fileUrl}` : resource.fileUrl}
+                      href={getMediaUrl(resource.fileUrl)}
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => updateEngagement(resource._id, "view", { uid: user?.uid })}
@@ -180,7 +181,7 @@ const ResourcesList = ({ refreshKey }) => {
                 {resource.fileUrl && previewable(resource.fileUrl) ? (
                   <iframe
                     title={`preview-${resource._id}`}
-                    src={resource.fileUrl.startsWith("/uploads/") ? `${API_BASE_URL}${resource.fileUrl}` : resource.fileUrl}
+                    src={getMediaUrl(resource.fileUrl)}
                     className="resource-preview"
                   />
                 ) : null}

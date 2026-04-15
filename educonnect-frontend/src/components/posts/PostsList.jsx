@@ -5,6 +5,7 @@ import ProgressBar from "../common/ProgressBar";
 import SkeletonCard from "../common/SkeletonCard";
 import { API_BASE_URL } from "../../utils/apiConfig";
 import PostActionIcon from "./PostActionIcon";
+import { getMediaUrl } from "../../utils/media";
 
 const PostsList = () => {
   const { user } = useSelector((state) => state.user);
@@ -409,7 +410,7 @@ const PostsList = () => {
                       {post.images.map((img, index) => (
                         <img
                           key={index}
-                          src={`${API_BASE_URL}/uploads/${img}`}
+                          src={getMediaUrl(img)}
                           alt="post"
                           className="post-image"
                           onError={(event) => {

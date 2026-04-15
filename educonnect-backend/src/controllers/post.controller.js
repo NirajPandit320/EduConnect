@@ -5,6 +5,7 @@ const { createAndEmitNotification } = require("./notification.controller");
 const { sendSuccess, sendError, sendValidationError } = require("../utils/response");
 const { sanitizeText, validateRequiredFields, validateStringLength } = require("../utils/validators");
 const log = require("../utils/logger");
+const { getStoredFileReference } = require("../utils/fileUpload");
 
 /**
  * CREATE POST - With validation and error handling
@@ -31,7 +32,11 @@ exports.createPost = async (req, res) => {
 
     // Process images
     const imageFiles = req.files || [];
-    const images = imageFiles.slice(0, 5).map(file => file.filename); // Max 5 images
+    const images = await Promise.all(
+      imageFiles
+        .slice(0, 5)
+        .map((file) => getStoredFileReference(file, "educonnect/posts", "image"))
+    );
 
     // Create post
     const newPost = await Post.create({

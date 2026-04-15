@@ -3,6 +3,7 @@ const User = require("../models/User");
 const { sendSuccess, sendError, sendValidationError } = require("../utils/response");
 const { sanitizeText, validateRequiredFields } = require("../utils/validators");
 const log = require("../utils/logger");
+const { getStoredFileUrl } = require("../utils/fileUpload");
 
 const parseTags = (tags) => {
   if (Array.isArray(tags)) return tags;
@@ -114,11 +115,13 @@ exports.uploadResource = async (req, res) => {
       });
     }
 
-    files.forEach((file) => {
+    for (const file of files) {
+      const storedFileUrl = await getStoredFileUrl(file, "educonnect/resources", "auto");
+
       payload.push({
         title: files.length > 1 ? `${title.trim()} (${file.originalname})` : title.trim(),
         description: sanitizeText(description || ""),
-        fileUrl: `/uploads/${file.filename}`,
+        fileUrl: storedFileUrl,
         fileName: file.originalname,
         fileSize: file.size,
         mimeType: file.mimetype,
@@ -129,7 +132,7 @@ exports.uploadResource = async (req, res) => {
         resourceType: resourceType || "file",
         category: category || "notes",
       });
-    });
+    }
 
     const created = await Resource.insertMany(payload);
     const data = await Promise.all(created.map((resource) => toPublicResource(resource, uploaderUid)));
@@ -285,7 +288,7 @@ exports.updateResource = async (req, res) => {
 
     // Handle file update
     if (req.file) {
-      resource.fileUrl = `/uploads/${req.file.filename}`;
+      resource.fileUrl = await getStoredFileUrl(req.file, "educonnect/resources", "auto");
       resource.fileName = req.file.originalname;
       resource.fileSize = req.file.size;
       resource.mimeType = req.file.mimetype;
