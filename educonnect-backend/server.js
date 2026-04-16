@@ -38,12 +38,15 @@ if (process.env.CORS_ORIGINS) {
 console.log("🔌 Socket.io CORS Allowed Origins:", socketCorsOrigins);
 
 // Initialize socket.io with proper CORS
+// const io = new Server(server, {
+//   cors: {
+//     origin: "*",
+//     methods: ["GET", "POST"],
+//     // credentials: true,
+//   },
+// });
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    // credentials: true,
-  },
+
 });
 
 app.set("io", io);
