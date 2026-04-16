@@ -3,6 +3,7 @@
  * Runs before all tests to configure test environment
  */
 
+require('dotenv').config();
 // Set test environment variables
 process.env.NODE_ENV = 'test';
 process.env.PORT = 5001;

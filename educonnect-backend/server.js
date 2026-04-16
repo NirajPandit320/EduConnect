@@ -1,3 +1,4 @@
+require('dotenv').config();
 const connectDB = require("./src/config/db");
 const http = require("http");
 const app = require("./src/app");
@@ -39,9 +40,9 @@ console.log("🔌 Socket.io CORS Allowed Origins:", socketCorsOrigins);
 // Initialize socket.io with proper CORS
 const io = new Server(server, {
   cors: {
-    origin: socketCorsOrigins,
+    origin: "*",
     methods: ["GET", "POST"],
-    credentials: true,
+    // credentials: true,
   },
 });
 

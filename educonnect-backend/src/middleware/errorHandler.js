@@ -3,7 +3,7 @@
  * Catches all errors and returns standardized response
  * Must be placed LAST in app.js middleware chain
  */
-
+require('dotenv').config();
 const log = require("../utils/logger");
 const { AppError, ValidationError, NotFoundError } = require("../utils/errors");
 

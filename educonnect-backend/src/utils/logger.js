@@ -3,7 +3,7 @@
  * Replaces console.log throughout the application
  * Can be enhanced with Winston/Morgan in future
  */
-
+require('dotenv').config();
 const LOG_LEVELS = {
   ERROR: "ERROR",
   WARN: "WARN",
