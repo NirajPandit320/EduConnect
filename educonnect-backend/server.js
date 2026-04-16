@@ -46,6 +46,12 @@ console.log("🔌 Socket.io CORS Allowed Origins:", socketCorsOrigins);
 //   },
 // });
 const io = new Server(server, {
+  cors: {
+
+    origin: "*",
+    methods: ["GET", "POST"],
+    
+    },
 
 });
 
