@@ -14,6 +14,11 @@ const NotificationPanel = ({ user }) => {
     call: "📞",
     quiz: "🏆",
     post: "📝",
+    general: "🔔",
+    info: "ℹ️",
+    warning: "⚠️",
+    success: "✅",
+    error: "⛔",
     default: "🔔",
   };
 
@@ -24,7 +29,10 @@ const NotificationPanel = ({ user }) => {
     setLoading(true);
     fetch(`${API_BASE_URL}/api/notifications/${user.uid}`)
       .then((res) => res.json())
-      .then((data) => setNotifications(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : data?.data;
+        setNotifications(Array.isArray(list) ? list : []);
+      })
       .catch(() => setNotifications([]))
       .finally(() => setLoading(false));
   }, [user]);
