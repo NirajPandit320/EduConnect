@@ -16,13 +16,13 @@ const Sidebar = () => {
   const isActive = (path) => location.pathname === path;
 
   const menuItems = [
-    { path: "/admin", label: "📊 Dashboard", icon: "📊" },
-    { path: "/admin/users", label: "👥 Users", icon: "👥" },
-    { path: "/admin/posts", label: "📝 Posts", icon: "📝" },
-    { path: "/admin/events", label: "📅 Events", icon: "📅" },
-    { path: "/admin/jobs", label: "💼 Jobs", icon: "💼" },
-    { path: "/admin/resources", label: "📚 Resources", icon: "📚" },
-    { path: "/admin/notifications", label: "📢 Notifications", icon: "📢" },
+    { path: "/admin", label: "Dashboard", icon: "📊" },
+    { path: "/admin/users", label: "Users", icon: "👥" },
+    { path: "/admin/posts", label: "Posts", icon: "📝" },
+    { path: "/admin/events", label: "Events", icon: "📅" },
+    { path: "/admin/jobs", label: "Jobs", icon: "💼" },
+    { path: "/admin/resources", label: "Resources", icon: "📚" },
+    { path: "/admin/notifications", label: "Notifications", icon: "📢" },
   ];
 
   return (

@@ -93,14 +93,20 @@ exports.createEvent = async (req, res) => {
 exports.getEvents = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = "active" } = req.query;
-    const skip = (page - 1) * limit;
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+    const skip = (parsedPage - 1) * parsedLimit;
 
-    const query = status ? { eventStatus: status } : {};
+    const normalizedStatus = String(status || "").trim().toLowerCase();
+    const query =
+      normalizedStatus && normalizedStatus !== "all"
+        ? { eventStatus: normalizedStatus }
+        : {};
 
     const events = await Event.find(query)
       .sort({ date: 1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parsedLimit);
 
     const total = await Event.countDocuments(query);
 
@@ -109,10 +115,10 @@ exports.getEvents = async (req, res) => {
       {
         events,
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
+          page: parsedPage,
+          limit: parsedLimit,
           total,
-          totalPages: Math.ceil(total / limit),
+          totalPages: Math.ceil(total / parsedLimit),
         },
       },
       "Events retrieved successfully"

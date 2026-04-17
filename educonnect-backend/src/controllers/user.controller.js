@@ -24,6 +24,11 @@ const normalizeStringArray = (value) => {
     .filter(Boolean);
 };
 
+const isUserBlocked = (user) => {
+  const status = String(user?.status || "").toLowerCase();
+  return status === "blocked" || status === "inactive";
+};
+
 // CREATE USER PROFILE (UNCHANGED)
 
 exports.createUserProfile = async (req, res) => {
@@ -39,6 +44,13 @@ exports.createUserProfile = async (req, res) => {
     const existingUser = await User.findOne({ uid });
 
     if (existingUser) {
+      if (isUserBlocked(existingUser)) {
+        return res.status(403).json({
+          message: "Your account is blocked. Please contact admin.",
+          blocked: true,
+        });
+      }
+
       if (
         existingUser.name === "No Name" ||
         existingUser.name === "Temporary Name"
@@ -91,6 +103,13 @@ exports.getUserByUid = async (req, res) => {
 
     if (!user) {
       return res.status(200).json(null);
+    }
+
+    if (isUserBlocked(user)) {
+      return res.status(403).json({
+        message: "Your account is blocked. Please contact admin.",
+        blocked: true,
+      });
     }
 
     res.status(200).json({
@@ -172,6 +191,13 @@ exports.getProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         message: "User not found",
+      });
+    }
+
+    if (isUserBlocked(user)) {
+      return res.status(403).json({
+        message: "Your account is blocked. Please contact admin.",
+        blocked: true,
       });
     }
 

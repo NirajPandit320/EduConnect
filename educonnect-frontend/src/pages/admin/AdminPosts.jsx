@@ -20,7 +20,7 @@ const AdminPosts = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchAllPosts(pageNum, 10);
+      const response = await fetchAllPosts(pageNum, 1000);
       setPosts(response.posts || []);
     } catch (err) {
       setError(err.message || "Failed to fetch posts");
@@ -134,7 +134,7 @@ const AdminPosts = () => {
                       {post.content?.substring(0, 60)}...
                     </small>
                   </td>
-                  <td>{post.author?.name || "Unknown"}</td>
+                  <td>{post.userName || post.author?.name || "Unknown"}</td>
                   <td>❤️ {post.likes?.length || 0}</td>
                   <td>💬 {post.comments?.length || 0}</td>
                   <td>

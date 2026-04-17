@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import ConfirmModal from "../../components/admin/ConfirmModal";
-import { fetchAllUsers, deleteUser } from "../../utils/adminAPI";
+import { fetchAllUsers, setUserBlockStatus } from "../../utils/adminAPI";
 import "../../styles/admin.css";
 
 const AdminUsers = () => {
@@ -13,8 +13,9 @@ const AdminUsers = () => {
     isOpen: false,
     userId: null,
     userName: null,
+    nextBlockedState: false,
   });
-  const [deleting, setDeleting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -33,24 +34,39 @@ const AdminUsers = () => {
     fetchUsers();
   }, []);
 
-  const handleDeleteClick = (userId, userName) => {
+  const handleBlockToggleClick = (userId, userName, isCurrentlyBlocked) => {
     setConfirmModal({
       isOpen: true,
       userId,
       userName,
+      nextBlockedState: !isCurrentlyBlocked,
     });
   };
 
-  const handleConfirmDelete = async () => {
-    setDeleting(true);
+  const handleConfirmStatusUpdate = async () => {
+    setUpdatingStatus(true);
     try {
-      await deleteUser(confirmModal.userId);
-      setUsers(users.filter((u) => u._id !== confirmModal.userId));
-      setConfirmModal({ isOpen: false, userId: null, userName: null });
+      const response = await setUserBlockStatus(
+        confirmModal.userId,
+        confirmModal.nextBlockedState
+      );
+      const updatedUser = response?.user;
+
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u._id === confirmModal.userId ? { ...u, ...updatedUser } : u
+        )
+      );
+      setConfirmModal({
+        isOpen: false,
+        userId: null,
+        userName: null,
+        nextBlockedState: false,
+      });
     } catch (err) {
-      setError(err.message || "Failed to delete user");
+      setError(err.message || "Failed to update user status");
     } finally {
-      setDeleting(false);
+      setUpdatingStatus(false);
     }
   };
 
@@ -124,11 +140,23 @@ const AdminUsers = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
+              {filteredUsers.map((user) => {
+                const isBlocked = user.status === "blocked" || user.status === "inactive";
+
+                return (
                 <tr key={user._id}>
                   <td>{user.name || "N/A"}</td>
                   <td>{user.email || "N/A"}</td>
-                  <td>{user.role || "User"}</td>
+                  <td>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span>{user.role || "User"}</span>
+                      {isBlocked ? (
+                        <span style={{ color: "#DC2626", fontSize: "12px" }}>Blocked</span>
+                      ) : (
+                        <span style={{ color: "#16A34A", fontSize: "12px" }}>Active</span>
+                      )}
+                    </div>
+                  </td>
                   <td>
                     {user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString()
@@ -136,14 +164,15 @@ const AdminUsers = () => {
                   </td>
                   <td>
                     <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDeleteClick(user._id, user.name)}
+                      className={`btn btn-sm ${isBlocked ? "btn-secondary" : "btn-danger"}`}
+                      onClick={() => handleBlockToggleClick(user._id, user.name, isBlocked)}
                     >
-                      🗑️ Delete
+                      {isBlocked ? "Unblock" : "Block"}
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -151,13 +180,23 @@ const AdminUsers = () => {
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title="Delete User"
-        message={`Are you sure you want to delete "${confirmModal.userName}"? This action cannot be undone.`}
-        onConfirm={handleConfirmDelete}
-        onCancel={() =>
-          setConfirmModal({ isOpen: false, userId: null, userName: null })
+        title={confirmModal.nextBlockedState ? "Block User" : "Unblock User"}
+        message={
+          confirmModal.nextBlockedState
+            ? `Are you sure you want to block "${confirmModal.userName}"? Blocked users cannot log in until unblocked.`
+            : `Are you sure you want to unblock "${confirmModal.userName}"?`
         }
-        isLoading={deleting}
+        confirmLabel={confirmModal.nextBlockedState ? "Block" : "Unblock"}
+        onConfirm={handleConfirmStatusUpdate}
+        onCancel={() =>
+          setConfirmModal({
+            isOpen: false,
+            userId: null,
+            userName: null,
+            nextBlockedState: false,
+          })
+        }
+        isLoading={updatingStatus}
       />
     </AdminLayout>
   );

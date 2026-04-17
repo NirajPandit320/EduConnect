@@ -5,33 +5,51 @@
  */
 
 const { ADMIN_EMAIL } = require("../config/admin");
-const { validateSession } = require("../utils/adminSessions");
+const { validateSession, getSessionInfo } = require("../utils/adminSessions");
 const { sendError } = require("../utils/response");
+
+const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+
+const extractSessionToken = (req) => {
+  const authorization = req.headers.authorization;
+  const sessionHeader = req.headers["x-admin-session"];
+  const cookieToken = req.cookies?.adminSession;
+  const rawToken = authorization || sessionHeader || cookieToken;
+
+  if (!rawToken) {
+    return null;
+  }
+
+  const token = String(rawToken).trim();
+  if (token.toLowerCase().startsWith("bearer ")) {
+    return token.slice(7).trim();
+  }
+
+  return token;
+};
 
 const isAdmin = (req, res, next) => {
   try {
-    // Get session token from header or cookie
-    const sessionToken = req.headers.authorization || req.headers["x-admin-session"] || req.cookies?.adminSession;
-    const email = req.headers.email || req.body.email || req.query.email;
+    const sessionToken = extractSessionToken(req);
+    const expectedAdminEmail = normalizeEmail(ADMIN_EMAIL);
 
-    // Validate required fields
-    if (!sessionToken || !email) {
+    if (!sessionToken) {
       return sendError(res, "Missing admin credentials", 401);
     }
 
-    // Validate session
-    if (!validateSession(sessionToken, email)) {
+    if (!validateSession(sessionToken)) {
       return sendError(res, "Invalid or expired admin session", 401);
     }
 
-    // Additional check - ensure email is admin email
-    if (email !== ADMIN_EMAIL) {
+    const session = getSessionInfo(sessionToken);
+    const sessionEmail = normalizeEmail(session?.email);
+
+    if (!sessionEmail || sessionEmail !== expectedAdminEmail) {
       return sendError(res, "User is not an admin", 403);
     }
 
-    // Attach admin info to request
     req.admin = {
-      email,
+      email: sessionEmail,
       sessionToken,
       isAuthenticated: true,
     };

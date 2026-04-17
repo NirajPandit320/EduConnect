@@ -4,8 +4,16 @@
  * Simple in-memory implementation (can be upgraded to Redis for multi-server)
  */
 
-const sessions = new Map(); // Map<sessionToken, {email, timestamp, expiresAt}>
-const SESSION_TTL_MS = 3600000; // 1 hour in milliseconds
+const sessions = new Map(); // Map<sessionToken, {email, createdAt, expiresAt|null}>
+
+// By default, admin sessions remain valid until explicit logout.
+// Set ADMIN_SESSION_TTL_MS to a positive integer (ms) to enable expiration.
+const parsedSessionTtl = Number(process.env.ADMIN_SESSION_TTL_MS);
+const SESSION_TTL_MS = Number.isFinite(parsedSessionTtl) && parsedSessionTtl > 0
+  ? parsedSessionTtl
+  : null;
+
+const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
 /**
  * Create a new admin session
@@ -15,10 +23,10 @@ const SESSION_TTL_MS = 3600000; // 1 hour in milliseconds
 const createSession = (email) => {
   const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const now = Date.now();
-  const expiresAt = now + SESSION_TTL_MS;
+  const expiresAt = SESSION_TTL_MS ? now + SESSION_TTL_MS : null;
 
   sessions.set(sessionToken, {
-    email,
+    email: normalizeEmail(email),
     createdAt: now,
     expiresAt,
   });
@@ -32,7 +40,7 @@ const createSession = (email) => {
 /**
  * Validate an admin session
  * @param {string} sessionToken - Session token to validate
- * @param {string} email - Email to verify against session
+ * @param {string} [email] - Optional email to verify against session
  * @returns {boolean} true if valid
  */
 const validateSession = (sessionToken, email) => {
@@ -44,13 +52,13 @@ const validateSession = (sessionToken, email) => {
   const now = Date.now();
 
   // Check expiration
-  if (now > session.expiresAt) {
+  if (session.expiresAt && now > session.expiresAt) {
     sessions.delete(sessionToken);
     return false;
   }
 
-  // Check email match
-  if (session.email !== email) {
+  // If email is provided, verify match.
+  if (email && session.email !== normalizeEmail(email)) {
     return false;
   }
 
@@ -72,7 +80,7 @@ const cleanupExpiredSessions = () => {
   const now = Date.now();
 
   for (const [token, session] of sessions.entries()) {
-    if (now > session.expiresAt) {
+    if (session.expiresAt && now > session.expiresAt) {
       sessions.delete(token);
     }
   }

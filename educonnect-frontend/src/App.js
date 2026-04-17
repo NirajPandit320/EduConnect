@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import RootPage from "./pages/RootPage";
 import AuthPage from "./pages/AuthPage";
 import { useDispatch, useSelector } from "react-redux";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { clearUser, setUser } from "./store/userSlice";
 import { auth } from "./utils/firebase";
 import { API_BASE_URL } from "./utils/apiConfig";
@@ -51,6 +51,15 @@ function App() {
   const { user, loading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
+  const handleBlockedUser = async () => {
+    dispatch(clearUser());
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Signout after block check failed:", error);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("Auth state changed:", firebaseUser);
@@ -65,6 +74,13 @@ function App() {
         let response = await fetch(
           `${API_BASE_URL}/api/users/uid/${firebaseUser.uid}`
         );
+
+        if (response.status === 403) {
+          const blockedData = await response.json();
+          console.warn(blockedData?.message || "Blocked user denied");
+          await handleBlockedUser();
+          return;
+        }
 
         //  Step 2: If NOT found → create user
         if (!response.ok) {
@@ -98,6 +114,11 @@ function App() {
         const data = await response.json();
         console.log("Final user data:", data);
 
+        if (data?.user?.status === "blocked" || data?.user?.status === "inactive") {
+          await handleBlockedUser();
+          return;
+        }
+
         dispatch(setUser(data?.user || {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
@@ -105,6 +126,11 @@ function App() {
 
       } catch (error) {
         console.error("Backend error:", error);
+
+        if (String(error?.message || "").toLowerCase().includes("blocked")) {
+          await handleBlockedUser();
+          return;
+        }
 
         //  Step 5: Fallback (still allow login)
         dispatch(

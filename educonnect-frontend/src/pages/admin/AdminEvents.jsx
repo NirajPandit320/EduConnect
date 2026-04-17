@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import Modal from "../../components/admin/Modal";
 import ConfirmModal from "../../components/admin/ConfirmModal";
-import { fetchAllEvents, createEvent, deleteEvent } from "../../utils/adminAPI";
+import {
+  fetchAllEvents,
+  createEvent,
+  deleteEvent,
+  updateEventStatus,
+} from "../../utils/adminAPI";
 import "../../styles/admin.css";
 
 const AdminEvents = () => {
@@ -18,6 +23,7 @@ const AdminEvents = () => {
     eventTitle: null,
   });
   const [deleting, setDeleting] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -31,7 +37,7 @@ const AdminEvents = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchAllEvents(1, 20);
+      const response = await fetchAllEvents(1, 1000, "all");
       setEvents(response.events || []);
     } catch (err) {
       setError(err.message || "Failed to fetch events");
@@ -95,6 +101,44 @@ const AdminEvents = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleStatusUpdate = async (eventId, status) => {
+    setStatusUpdatingId(eventId);
+    try {
+      const response = await updateEventStatus(eventId, status);
+      const updatedEvent = response?.event || response?.data?.event;
+
+      if (updatedEvent?._id) {
+        setEvents((prevEvents) =>
+          prevEvents.map((e) => (e._id === updatedEvent._id ? updatedEvent : e))
+        );
+      } else {
+        await fetchEvents();
+      }
+    } catch (err) {
+      setError(err.message || "Failed to update event status");
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const getStatusMeta = (status) => {
+    const normalized = String(status || "").toLowerCase();
+
+    if (normalized === "active") {
+      return { label: "Approved", background: "#ECFDF5", color: "#065F46" };
+    }
+
+    if (normalized === "cancelled") {
+      return { label: "Rejected", background: "#FEF2F2", color: "#991B1B" };
+    }
+
+    if (normalized === "completed") {
+      return { label: "Completed", background: "#EEF2FF", color: "#3730A3" };
+    }
+
+    return { label: "Pending", background: "#FFFBEB", color: "#92400E" };
   };
 
   const filteredEvents = events.filter(
@@ -175,45 +219,67 @@ const AdminEvents = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredEvents.map((event) => (
+              {filteredEvents.map((event) => {
+                const statusMeta = getStatusMeta(event.eventStatus);
+                const isUpdating = statusUpdatingId === event._id;
+                const canApprove = String(event.eventStatus || "").toLowerCase() !== "active";
+                const canReject = String(event.eventStatus || "").toLowerCase() !== "cancelled";
+
+                return (
                 <tr key={event._id}>
                   <td>
                     <strong>{event.title || "Untitled"}</strong>
                   </td>
                   <td>{event.location || "N/A"}</td>
                   <td>
-                    {event.eventDate
-                      ? new Date(event.eventDate).toLocaleDateString()
+                    {event.date
+                      ? new Date(event.date).toLocaleDateString()
                       : "N/A"}
                   </td>
-                  <td>{event.attendees?.length || 0}</td>
-                  <td>{event.maxAttendees || "Unlimited"}</td>
+                  <td>{event.participants?.length || 0}</td>
+                  <td>{event.capacity || "Unlimited"}</td>
                   <td>
                     <span
                       style={{
-                        background: "#ECFDF5",
-                        color: "#065F46",
+                        background: statusMeta.background,
+                        color: statusMeta.color,
                         padding: "4px 12px",
                         borderRadius: "4px",
                         fontSize: "12px",
                         fontWeight: "600",
                       }}
                     >
-                      ✓ Active
+                      {statusMeta.label}
                     </span>
                   </td>
-                  <td>
+                  <td style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleStatusUpdate(event._id, "active")}
+                      disabled={!canApprove || isUpdating}
+                    >
+                      {isUpdating && canApprove ? "..." : "Accept"}
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => handleStatusUpdate(event._id, "cancelled")}
+                      disabled={!canReject || isUpdating}
+                    >
+                      {isUpdating && canReject ? "..." : "Reject"}
+                    </button>
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() =>
                         handleDeleteClick(event._id, event.title || "Event")
                       }
+                      disabled={isUpdating}
                     >
-                      🗑️ Delete
+                      Delete
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

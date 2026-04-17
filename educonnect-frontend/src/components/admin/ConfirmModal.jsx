@@ -1,7 +1,15 @@
 import Modal from "./Modal";
 import "../../styles/admin.css";
 
-const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, isLoading }) => {
+const ConfirmModal = ({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  isLoading,
+  confirmLabel = "Confirm",
+}) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -22,7 +30,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, isLoading }
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Deleting..." : "Delete"}
+            {isLoading ? "Please wait..." : confirmLabel}
           </button>
         </div>
       }

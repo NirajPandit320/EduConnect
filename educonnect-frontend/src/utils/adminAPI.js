@@ -6,13 +6,26 @@ export const fetchAllUsers = async () => {
   return adminFetch("/api/users", { method: "GET" });
 };
 
+export const setUserBlockStatus = async (userId, blocked) => {
+  return adminFetch(`/api/users/${userId}/block`, {
+    method: "PATCH",
+    body: { blocked: Boolean(blocked) },
+  });
+};
+
+// Backward-compatible alias for older callers.
 export const deleteUser = async (userId) => {
-  return adminFetch(`/api/users/${userId}`, { method: "DELETE" });
+  return setUserBlockStatus(userId, true);
 };
 
 // POSTS API
 export const fetchAllPosts = async (page = 1, limit = 10) => {
-  return adminFetch(`/api/posts?page=${page}&limit=${limit}`, { method: "GET" });
+  const response = await adminFetch(`/api/posts?page=${page}&limit=${limit}`, {
+    method: "GET",
+  });
+
+  // Supports both standardized response { data: { posts } } and legacy { posts }.
+  return response?.data || response;
 };
 
 export const deletePost = async (postId) => {
@@ -20,8 +33,13 @@ export const deletePost = async (postId) => {
 };
 
 // EVENTS API
-export const fetchAllEvents = async (page = 1, limit = 10) => {
-  return adminFetch(`/api/events?page=${page}&limit=${limit}`, { method: "GET" });
+export const fetchAllEvents = async (page = 1, limit = 10, status = "all") => {
+  const response = await adminFetch(
+    `/api/events?page=${page}&limit=${limit}&status=${encodeURIComponent(status)}`,
+    { method: "GET" }
+  );
+
+  return response?.data || response;
 };
 
 export const createEvent = async (eventData) => {
@@ -58,6 +76,13 @@ export const createEvent = async (eventData) => {
   }
 
   return result;
+};
+
+export const updateEventStatus = async (eventId, status) => {
+  return adminFetch(`/api/admin/events/${eventId}/status`, {
+    method: "PATCH",
+    body: { status },
+  });
 };
 
 export const deleteEvent = async (eventId) => {

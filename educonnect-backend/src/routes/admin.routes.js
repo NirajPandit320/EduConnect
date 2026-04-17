@@ -6,6 +6,7 @@ const {
   getAdminStats,
   deletePostAdmin,
   deleteEventAdmin,
+  updateEventStatusAdmin,
 } = require("../controllers/admin.controller");
 const isAdmin = require("../middleware/admin.middleware");
 
@@ -18,6 +19,7 @@ router.get("/stats", isAdmin, getAdminStats);
 
 // Admin moderation
 router.delete("/posts/:id", isAdmin, deletePostAdmin);
+router.patch("/events/:id/status", isAdmin, updateEventStatusAdmin);
 router.delete("/events/:id", isAdmin, deleteEventAdmin);
 
 module.exports = router;

@@ -6,18 +6,9 @@ const { createSession, destroySession } = require("../utils/adminSessions");
 const { sendSuccess, sendError } = require("../utils/response");
 const log = require("../utils/logger");
 
-/**
- * Admin Login
- * Validates credentials and creates session
- */
 exports.adminLogin = (req, res) => {
   try {
     const { email, password } = req.body;
-
-    console.log("req.body.email:", email);
-    console.log("req.body.password:", password);
-    console.log("ADMIN_EMAIL:", ADMIN_EMAIL);
-    console.log("ADMIN_PASSWORD:", ADMIN_PASSWORD);
 
     // Validate required fields
     if (!email || !password) {
@@ -69,7 +60,10 @@ exports.adminLogin = (req, res) => {
  */
 exports.adminLogout = (req, res) => {
   try {
-    const sessionToken = req.headers.authorization || req.headers["x-admin-session"];
+    const rawToken = req.headers.authorization || req.headers["x-admin-session"];
+    const sessionToken = rawToken
+      ? String(rawToken).trim().replace(/^Bearer\s+/i, "")
+      : null;
 
     if (sessionToken) {
       destroySession(sessionToken);
@@ -157,5 +151,45 @@ exports.deleteEventAdmin = async (req, res) => {
   } catch (error) {
     log.error("Failed to delete event", error);
     return sendError(res, "Failed to delete event", 500);
+  }
+};
+
+/**
+ * Update Event Status (Admin)
+ * Approve/Reject events by changing status.
+ */
+exports.updateEventStatusAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!id) {
+      return sendError(res, "Event ID is required", 400);
+    }
+
+    if (!status || !["active", "cancelled", "completed"].includes(status)) {
+      return sendError(res, "Valid event status is required", 400);
+    }
+
+    const event = await Event.findByIdAndUpdate(
+      id,
+      { eventStatus: status },
+      { new: true }
+    );
+
+    if (!event) {
+      return sendError(res, "Event not found", 404);
+    }
+
+    log.info("Admin updated event status", {
+      eventId: id,
+      status,
+      admin: req.admin?.email,
+    });
+
+    return sendSuccess(res, { event }, "Event status updated successfully");
+  } catch (error) {
+    log.error("Failed to update event status", error);
+    return sendError(res, "Failed to update event status", 500);
   }
 };
