@@ -24,40 +24,43 @@ exports.createJob = async (req, res) => {
       title,
       company,
       ctc,
+      salary,
       description,
       deadline,
+      location,
       createdBy,
-      isAdmin,
     } = req.body;
 
-    // Validation
+    // Validation - only title and company required (deadline optional with default)
     const errors = validateRequiredFields(
-      { title, company, deadline },
-      ["title", "company", "deadline"]
+      { title, company },
+      ["title", "company"]
     );
     if (errors.length) {
       return sendValidationError(res, "Validation failed", errors);
     }
 
-    // Authorization - must be admin
-    if (!isAdmin) {
-      return sendError(res, "Only admins can create jobs", 403);
-    }
+    // Map salary to ctc if provided, otherwise use ctc directly
+    const jobCtc = ctc || salary ? Number(ctc || salary) : null;
+
+    // Use provided deadline or default to 30 days from now
+    const jobDeadline = deadline ? new Date(deadline) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     // Create job
     const job = await Job.create({
       title: title.trim(),
       company: company.trim(),
-      ctc: ctc ? Number(ctc) : null,
+      location: location?.trim() || "",
+      ctc: jobCtc,
       description: description?.trim() || "",
-      deadline: new Date(deadline),
+      deadline: jobDeadline,
       createdBy: createdBy || "admin",
       jobStatus: "active",
       applicationCount: 0,
     });
 
     log.info("Job created", { jobId: job._id, company });
-    return sendSuccess(res, job, "Job created successfully", 201);
+    return sendSuccess(res, { job }, "Job created successfully", 201);
   } catch (error) {
     log.error("Create job error", error);
     return sendError(res, "Failed to create job", 500);
@@ -69,17 +72,21 @@ exports.createJob = async (req, res) => {
  */
 exports.getJobs = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status = "active", page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
     const query = {};
 
-    // Filter by status
-    if (status === "active") {
+    // Admin can view all jobs if status=all is requested
+    if (status === "all") {
+      // No filters - return all jobs
+    } else if (status === "active") {
       query.deadline = { $gte: new Date() };
       query.jobStatus = "active";
     } else if (status === "expired") {
       query.deadline = { $lt: new Date() };
+    } else if (status === "closed" || status === "archived") {
+      query.jobStatus = status;
     }
 
     const jobs = await Job.find(query)
@@ -209,6 +216,41 @@ exports.checkEligibility = async (req, res) => {
   } catch (error) {
     log.error("Check eligibility error", error);
     return sendError(res, "Failed to check eligibility", 500);
+  }
+};
+
+/**
+ * UPDATE JOB STATUS - Admin only
+ */
+exports.updateJobStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validation
+    if (!id) {
+      return sendValidationError(res, "Job ID required");
+    }
+
+    if (!status || !["active", "closed", "archived"].includes(status)) {
+      return sendValidationError(res, "Valid status required (active, closed, archived)");
+    }
+
+    const job = await Job.findByIdAndUpdate(
+      id,
+      { jobStatus: status },
+      { new: true }
+    );
+
+    if (!job) {
+      return sendError(res, "Job not found", 404);
+    }
+
+    log.info("Job status updated", { jobId: id, status });
+    return sendSuccess(res, { job }, "Job status updated successfully");
+  } catch (error) {
+    log.error("Update job status error", error);
+    return sendError(res, "Failed to update job status", 500);
   }
 };
 

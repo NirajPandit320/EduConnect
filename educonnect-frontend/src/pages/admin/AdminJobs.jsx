@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import Modal from "../../components/admin/Modal";
 import ConfirmModal from "../../components/admin/ConfirmModal";
-import { fetchAllJobs, createJob, deleteJob } from "../../utils/adminAPI";
+import { fetchAllJobs, createJob, deleteJob, updateJobStatus } from "../../utils/adminAPI";
 import "../../styles/admin.css";
 
 const AdminJobs = () => {
@@ -18,21 +18,22 @@ const AdminJobs = () => {
     jobTitle: null,
   });
   const [deleting, setDeleting] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     company: "",
     description: "",
     salary: "",
     location: "",
-    jobType: "Full-time",
+    deadline: "",
   });
 
   const fetchJobs = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchAllJobs(1, 20);
-      setJobs(response.jobs || []);
+      const response = await fetchAllJobs(1, 1000, "all");
+      setJobs(response.jobs || response?.data?.jobs || []);
     } catch (err) {
       setError(err.message || "Failed to fetch jobs");
     } finally {
@@ -51,6 +52,12 @@ const AdminJobs = () => {
 
   const handleCreateJob = async (e) => {
     e.preventDefault();
+    
+    if (!formData.deadline) {
+      setError("Deadline is required");
+      return;
+    }
+    
     setCreating(true);
     try {
       await createJob(formData);
@@ -61,7 +68,7 @@ const AdminJobs = () => {
         description: "",
         salary: "",
         location: "",
-        jobType: "Full-time",
+        deadline: "",
       });
       await fetchJobs();
     } catch (err) {
@@ -90,6 +97,31 @@ const AdminJobs = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleStatusUpdate = async (jobId, newStatus) => {
+    setStatusUpdatingId(jobId);
+    try {
+      await updateJobStatus(jobId, newStatus);
+      setJobs(
+        jobs.map((job) =>
+          job._id === jobId ? { ...job, jobStatus: newStatus } : job
+        )
+      );
+    } catch (err) {
+      setError(err.message || "Failed to update job status");
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const getStatusMeta = (status) => {
+    const statusMap = {
+      active: { label: "Active", background: "#D1FAE5", color: "#065F46" },
+      closed: { label: "Closed", background: "#FEE2E2", color: "#7F1D1D" },
+      archived: { label: "Archived", background: "#F3E8FF", color: "#4C1D95" },
+    };
+    return statusMap[status] || statusMap.active;
   };
 
   const filteredJobs = jobs.filter(
@@ -163,52 +195,78 @@ const AdminJobs = () => {
                 <th>Job Title</th>
                 <th>Company</th>
                 <th>Location</th>
-                <th>Type</th>
+                <th>Deadline</th>
                 <th>Salary</th>
+                <th>Status</th>
                 <th>Posted</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredJobs.map((job) => (
-                <tr key={job._id}>
-                  <td>
-                    <strong>{job.title || "Untitled"}</strong>
-                  </td>
-                  <td>{job.company || "N/A"}</td>
-                  <td>{job.location || "N/A"}</td>
-                  <td>
-                    <span
-                      style={{
-                        background: "#EFF6FF",
-                        color: "#0C2340",
-                        padding: "4px 10px",
-                        borderRadius: "4px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {job.jobType || "Full-time"}
-                    </span>
-                  </td>
-                  <td>{job.salary ? `₹${job.salary}` : "N/A"}</td>
-                  <td>
-                    {job.createdAt
-                      ? new Date(job.createdAt).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() =>
-                        handleDeleteClick(job._id, job.title || "Job")
-                      }
-                    >
-                      🗑️ Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredJobs.map((job) => {
+                const statusMeta = getStatusMeta(job.jobStatus);
+                return (
+                  <tr key={job._id}>
+                    <td>
+                      <strong>{job.title || "Untitled"}</strong>
+                    </td>
+                    <td>{job.company || "N/A"}</td>
+                    <td>{job.location || "N/A"}</td>
+                    <td>
+                      {job.deadline
+                        ? new Date(job.deadline).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td>{job.ctc ? `₹${job.ctc}` : "N/A"}</td>
+                    <td>
+                      <span
+                        style={{
+                          background: statusMeta.background,
+                          color: statusMeta.color,
+                          padding: "4px 10px",
+                          borderRadius: "4px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                        }}
+                      >
+                        {statusMeta.label}
+                      </span>
+                    </td>
+                    <td>
+                      {job.createdAt
+                        ? new Date(job.createdAt).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td>
+                      {job.jobStatus === "active" ? (
+                        <button
+                          className="btn btn-warning btn-sm"
+                          onClick={() => handleStatusUpdate(job._id, "closed")}
+                          disabled={statusUpdatingId === job._id}
+                        >
+                          {statusUpdatingId === job._id ? "..." : "🔒 Close"}
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-success btn-sm"
+                          onClick={() => handleStatusUpdate(job._id, "active")}
+                          disabled={statusUpdatingId === job._id}
+                        >
+                          {statusUpdatingId === job._id ? "..." : "✓ Open"}
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() =>
+                          handleDeleteClick(job._id, job.title || "Job")
+                        }
+                      >
+                        🗑️ Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -291,18 +349,15 @@ const AdminJobs = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Job Type</label>
-              <select
-                name="jobType"
-                className="form-select"
-                value={formData.jobType}
+              <label className="form-label">Deadline</label>
+              <input
+                type="date"
+                name="deadline"
+                className="form-input"
+                value={formData.deadline}
                 onChange={handleInputChange}
-              >
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-              </select>
+                required
+              />
             </div>
           </div>
 

@@ -90,14 +90,32 @@ export const deleteEvent = async (eventId) => {
 };
 
 // JOBS API
-export const fetchAllJobs = async (page = 1, limit = 10) => {
-  return adminFetch(`/api/jobs?page=${page}&limit=${limit}`, { method: "GET" });
+export const fetchAllJobs = async (page = 1, limit = 1000, status = "all") => {
+  const response = await adminFetch(`/api/jobs?status=${status}&page=${page}&limit=${limit}`, { method: "GET" });
+  return response?.data || response;
 };
 
 export const createJob = async (jobData) => {
-  return adminFetch("/api/jobs", {
+  const payload = {
+    title: jobData.title,
+    company: jobData.company,
+    description: jobData.description,
+    location: jobData.location,
+    salary: jobData.salary, // Will be mapped to ctc on backend
+    deadline: jobData.deadline,
+  };
+  
+  const response = await adminFetch("/api/jobs", {
     method: "POST",
-    body: jobData,
+    body: payload,
+  });
+  return response?.data || response;
+};
+
+export const updateJobStatus = async (jobId, status) => {
+  return adminFetch(`/api/jobs/${jobId}/status`, {
+    method: "PATCH",
+    body: { status },
   });
 };
 
