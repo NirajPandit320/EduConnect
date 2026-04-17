@@ -60,7 +60,7 @@ exports.createJob = async (req, res) => {
     });
 
     log.info("Job created", { jobId: job._id, company });
-    return sendSuccess(res, { job }, "Job created successfully", 201);
+    return sendSuccess(res, job, "Job created successfully", 201);
   } catch (error) {
     log.error("Create job error", error);
     return sendError(res, "Failed to create job", 500);
@@ -260,16 +260,10 @@ exports.updateJobStatus = async (req, res) => {
 exports.deleteJob = async (req, res) => {
   try {
     const { jobId } = req.params;
-    const { isAdmin = false } = req.body;
 
     // Validation
     if (!jobId) {
       return sendValidationError(res, "Job ID required");
-    }
-
-    // Authorization
-    if (!isAdmin) {
-      return sendError(res, "Only admins can delete jobs", 403);
     }
 
     const job = await Job.findById(jobId);
