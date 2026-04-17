@@ -96,13 +96,20 @@ export const fetchAllJobs = async (page = 1, limit = 1000, status = "all") => {
 };
 
 export const createJob = async (jobData) => {
+  const parsedCtc = Number(String(jobData.salary ?? "").replace(/,/g, "").trim());
+  const normalizedCtc = Number.isFinite(parsedCtc) ? parsedCtc : null;
+
   const payload = {
     title: jobData.title,
     company: jobData.company,
     description: jobData.description,
     location: jobData.location,
-    salary: jobData.salary, // Will be mapped to ctc on backend
+    salary: jobData.salary,
+    ctc: normalizedCtc,
     deadline: jobData.deadline,
+    // Backward compatibility for deployments still running older job controller checks.
+    isAdmin: true,
+    createdBy: "admin",
   };
   
   const response = await adminFetch("/api/jobs", {

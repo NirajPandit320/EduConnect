@@ -15,6 +15,20 @@ const toNumberOrNull = (value) => {
   return Number.isNaN(num) ? null : num;
 };
 
+const toCtcNumberOrNull = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const normalized = String(value).replace(/,/g, "").trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : null;
+};
+
 /**
  * CREATE JOB - Admin only
  */
@@ -41,7 +55,7 @@ exports.createJob = async (req, res) => {
     }
 
     // Map salary to ctc if provided, otherwise use ctc directly
-    const jobCtc = ctc || salary ? Number(ctc || salary) : null;
+    const jobCtc = toCtcNumberOrNull(ctc ?? salary);
 
     // Use provided deadline or default to 30 days from now
     const jobDeadline = deadline ? new Date(deadline) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
