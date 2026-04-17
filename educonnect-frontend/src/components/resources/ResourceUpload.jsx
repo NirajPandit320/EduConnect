@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import { FiCheckCircle, FiUploadCloud, FiLink2, FiTag, FiUsers } from "react-icons/fi";
 
 const MAX_FILE_MB = 20;
 
@@ -46,8 +47,13 @@ const ResourceUpload = ({ onUploaded }) => {
     const fetchUsers = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/users`);
-        const data = await response.json();
-        const list = Array.isArray(data?.users) ? data.users : [];
+        const payload = await response.json();
+        const data = payload?.data ?? payload;
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.users)
+          ? data.users
+          : [];
         setUsers(list.filter((item) => item?.uid && item.uid !== user?.uid));
       } catch (fetchError) {
         setUsers([]);
@@ -163,10 +169,13 @@ const ResourceUpload = ({ onUploaded }) => {
   };
 
   return (
-    <div className="resource-upload-card">
-      <h3>Upload Resource</h3>
+    <div className="resource-upload-card rm-upload-card">
+      <div className="rm-upload-head">
+        <h3>Upload Resource</h3>
+        <p>Share notes, videos, repositories, and files with clean metadata.</p>
+      </div>
 
-      <div className="resource-upload-grid">
+      <div className="resource-upload-grid rm-upload-grid">
         <input
           value={form.title}
           onChange={(event) => setForm({ ...form, title: event.target.value })}
@@ -213,26 +222,35 @@ const ResourceUpload = ({ onUploaded }) => {
       </div>
 
       <textarea
+        className="rm-textarea"
         value={form.description}
         onChange={(event) => setForm({ ...form, description: event.target.value })}
         placeholder="Description"
         rows={3}
       />
 
-      <input
-        value={form.fileUrl}
-        onChange={(event) => setForm({ ...form, fileUrl: event.target.value })}
-        placeholder="Optional external link (YouTube, GitHub, Drive, etc.)"
-      />
+      <div className="rm-upload-inline-fields">
+        <div className="rm-field rm-inline-field">
+          <FiLink2 />
+          <input
+            value={form.fileUrl}
+            onChange={(event) => setForm({ ...form, fileUrl: event.target.value })}
+            placeholder="Optional external link (YouTube, GitHub, Drive, etc.)"
+          />
+        </div>
 
-      <input
-        value={form.tags}
-        onChange={(event) => setForm({ ...form, tags: event.target.value })}
-        placeholder="Tags (comma separated)"
-      />
+        <div className="rm-field rm-inline-field">
+          <FiTag />
+          <input
+            value={form.tags}
+            onChange={(event) => setForm({ ...form, tags: event.target.value })}
+            placeholder="Tags (comma separated)"
+          />
+        </div>
+      </div>
 
       <label
-        className="resource-dropzone"
+        className="resource-dropzone rm-dropzone"
         onDragOver={(event) => event.preventDefault()}
         onDrop={handleDrop}
       >
@@ -242,7 +260,9 @@ const ResourceUpload = ({ onUploaded }) => {
           onChange={(event) => handleFileSelection(event.target.files)}
           hidden
         />
-        <span>{dragHint}</span>
+        <span>
+          <FiUploadCloud /> {dragHint}
+        </span>
         <small>All file types supported (max {MAX_FILE_MB}MB each)</small>
       </label>
 
@@ -261,8 +281,10 @@ const ResourceUpload = ({ onUploaded }) => {
       ) : null}
 
       {form.visibility === "private" ? (
-        <div className="resource-private-select-box">
-          <p>Select users who can access this resource</p>
+        <div className="resource-private-select-box rm-private-select-box">
+          <p>
+            <FiUsers /> Select users who can access this resource
+          </p>
           <div className="resource-private-user-list">
             {users.length === 0 ? (
               <small>No users available</small>
@@ -293,10 +315,14 @@ const ResourceUpload = ({ onUploaded }) => {
       ) : null}
 
       {error ? <p className="resource-error">{error}</p> : null}
-      {success ? <p className="resource-success">{success}</p> : null}
+      {success ? (
+        <p className="resource-success">
+          <FiCheckCircle /> {success}
+        </p>
+      ) : null}
 
-      <button type="button" onClick={handleUpload} disabled={uploading}>
-        {uploading ? "Uploading..." : "Upload Resource"}
+      <button className="rm-btn rm-btn-primary rm-upload-submit" type="button" onClick={handleUpload} disabled={uploading}>
+        <FiUploadCloud /> {uploading ? "Uploading..." : "Upload Resource"}
       </button>
     </div>
   );

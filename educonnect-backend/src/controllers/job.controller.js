@@ -29,6 +29,29 @@ const toCtcNumberOrNull = (value) => {
   return Number.isFinite(num) ? num : null;
 };
 
+const parseDeadline = (value) => {
+  if (!value) {
+    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  }
+
+  const raw = String(value).trim();
+  const dateOnlyMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1]);
+    const month = Number(dateOnlyMatch[2]);
+    const day = Number(dateOnlyMatch[3]);
+    return new Date(year, month - 1, day, 23, 59, 59, 999);
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  }
+
+  return parsed;
+};
+
 /**
  * CREATE JOB - Admin only
  */
@@ -58,7 +81,7 @@ exports.createJob = async (req, res) => {
     const jobCtc = toCtcNumberOrNull(ctc ?? salary);
 
     // Use provided deadline or default to 30 days from now
-    const jobDeadline = deadline ? new Date(deadline) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const jobDeadline = parseDeadline(deadline);
 
     // Create job
     const job = await Job.create({
@@ -95,7 +118,11 @@ exports.getJobs = async (req, res) => {
     if (status === "all") {
       // No filters - return all jobs
     } else if (status === "active") {
-      query.deadline = { $gte: new Date() };
+      query.$or = [
+        { deadline: { $exists: false } },
+        { deadline: null },
+        { deadline: { $gte: new Date() } },
+      ];
       query.jobStatus = "active";
     } else if (status === "expired") {
       query.deadline = { $lt: new Date() };
@@ -168,7 +195,14 @@ exports.checkEligibility = async (req, res) => {
       return sendError(res, "User not found", 404);
     }
 
-    const jobs = await Job.find({ jobStatus: "active", deadline: { $gte: new Date() } });
+    const jobs = await Job.find({
+      jobStatus: "active",
+      $or: [
+        { deadline: { $exists: false } },
+        { deadline: null },
+        { deadline: { $gte: new Date() } },
+      ],
+    });
 
     const eligibleJobs = [];
     const notEligibleJobs = [];

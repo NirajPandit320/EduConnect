@@ -132,21 +132,33 @@ export const deleteJob = async (jobId) => {
 
 // RESOURCES API
 export const fetchAllResources = async (page = 1, limit = 10) => {
-  return adminFetch(`/api/resources?page=${page}&limit=${limit}`, { method: "GET" });
+  const response = await adminFetch(`/api/admin/resources?page=${page}&limit=${limit}`, {
+    method: "GET",
+  });
+  return response?.data || response;
 };
 
 export const uploadResource = async (resourceData) => {
   const formData = new FormData();
 
   Object.keys(resourceData).forEach((key) => {
-    if (key === "files" && resourceData[key]) {
+    if (key === "files" && resourceData[key] && resourceData[key].length > 0) {
       Array.from(resourceData[key]).forEach((file) => {
         formData.append("files", file);
       });
-    } else {
+    } else if (key !== "files" && resourceData[key] !== null && resourceData[key] !== undefined) {
       formData.append(key, resourceData[key]);
     }
   });
+
+  // Ensure category matches backend enum casing.
+  if (resourceData.category) {
+    formData.set("category", String(resourceData.category).toLowerCase());
+  }
+
+  if (!formData.get("uploaderUid")) {
+    formData.append("uploaderUid", "admin");
+  }
 
   const token = localStorage.getItem("adminSessionToken");
   const email = localStorage.getItem("adminEmail");
@@ -155,7 +167,7 @@ export const uploadResource = async (resourceData) => {
     throw new Error("Admin session missing");
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/resources`, {
+  const response = await fetch(`${API_BASE_URL}/api/admin/resources`, {
     method: "POST",
     headers: {
       Authorization: token,
@@ -174,8 +186,20 @@ export const uploadResource = async (resourceData) => {
   return result;
 };
 
+export const updateResource = async (resourceId, resourceData) => {
+  return adminFetch(`/api/admin/resources/${resourceId}`, {
+    method: "PUT",
+    body: {
+      ...resourceData,
+      category: resourceData?.category
+        ? String(resourceData.category).toLowerCase()
+        : resourceData?.category,
+    },
+  });
+};
+
 export const deleteResource = async (resourceId) => {
-  return adminFetch(`/api/resources/${resourceId}`, { method: "DELETE" });
+  return adminFetch(`/api/admin/resources/${resourceId}`, { method: "DELETE" });
 };
 
 // NOTIFICATIONS API

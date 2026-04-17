@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import Modal from "../../components/admin/Modal";
 import ConfirmModal from "../../components/admin/ConfirmModal";
-import { fetchAllResources, uploadResource, deleteResource } from "../../utils/adminAPI";
+import {
+  fetchAllResources,
+  uploadResource,
+  deleteResource,
+  updateResource,
+} from "../../utils/adminAPI";
 import "../../styles/admin.css";
 
 const AdminResources = () => {
@@ -18,10 +23,15 @@ const AdminResources = () => {
     resourceTitle: null,
   });
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editModal, setEditModal] = useState({
+    isOpen: false,
+    resourceId: null,
+  });
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "Notes",
+    category: "notes",
     files: null,
   });
 
@@ -29,8 +39,8 @@ const AdminResources = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchAllResources(1, 20);
-      setResources(response.resources || []);
+      const response = await fetchAllResources(1, 1000);
+      setResources(response.resources || response?.data?.resources || []);
     } catch (err) {
       setError(err.message || "Failed to fetch resources");
     } finally {
@@ -65,7 +75,7 @@ const AdminResources = () => {
       setFormData({
         title: "",
         description: "",
-        category: "Notes",
+        category: "notes",
         files: null,
       });
       await fetchResources();
@@ -73,6 +83,42 @@ const AdminResources = () => {
       setError(err.message || "Failed to upload resource");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleEditClick = (resource) => {
+    setFormData({
+      title: resource.title || "",
+      description: resource.description || "",
+      category: (resource.category || "notes").toLowerCase(),
+      files: null,
+    });
+    setEditModal({ isOpen: true, resourceId: resource._id });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editModal.resourceId) return;
+
+    setEditing(true);
+    try {
+      await updateResource(editModal.resourceId, {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+      });
+
+      setEditModal({ isOpen: false, resourceId: null });
+      setFormData({
+        title: "",
+        description: "",
+        category: "notes",
+        files: null,
+      });
+      await fetchResources();
+    } catch (err) {
+      setError(err.message || "Failed to update resource");
+    } finally {
+      setEditing(false);
     }
   };
 
@@ -198,15 +244,21 @@ const AdminResources = () => {
                       {resource.category || "General"}
                     </span>
                   </td>
-                  <td>{resource.uploadedBy?.name || "Unknown"}</td>
-                  <td>📥 {resource.downloads || 0}</td>
-                  <td>❤️ {resource.likes?.length || 0}</td>
+                  <td>{resource.uploaderName || resource.uploadedBy || "Unknown"}</td>
+                  <td>📥 {resource.downloadCount || 0}</td>
+                  <td>❤️ {resource.likeCount || 0}</td>
                   <td>
                     {resource.createdAt
                       ? new Date(resource.createdAt).toLocaleDateString()
                       : "N/A"}
                   </td>
                   <td>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleEditClick(resource)}
+                    >
+                      ✏️ Edit
+                    </button>
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() =>
@@ -280,12 +332,13 @@ const AdminResources = () => {
               value={formData.category}
               onChange={handleInputChange}
             >
-              <option value="Notes">📝 Notes</option>
-              <option value="Books">📖 Books</option>
-              <option value="Videos">🎥 Videos</option>
-              <option value="Tutorials">🎓 Tutorials</option>
-              <option value="Papers">📄 Research Papers</option>
-              <option value="Assignments">📋 Assignments</option>
+              <option value="notes">📝 Notes</option>
+              <option value="docs">📖 Docs</option>
+              <option value="video">🎥 Videos</option>
+              <option value="ppt">📊 PPT</option>
+              <option value="code">💻 Code</option>
+              <option value="repository">📦 Repository</option>
+              <option value="image">🖼️ Image</option>
             </select>
           </div>
 
@@ -316,6 +369,64 @@ const AdminResources = () => {
         }
         isLoading={deleting}
       />
+
+      <Modal
+        isOpen={editModal.isOpen}
+        title="Edit Resource"
+        onClose={() => setEditModal({ isOpen: false, resourceId: null })}
+        footer={
+          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setEditModal({ isOpen: false, resourceId: null })}
+              disabled={editing}
+            >
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editing}>
+              {editing ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-group">
+          <label className="form-label">Resource Title</label>
+          <input
+            type="text"
+            name="title"
+            className="form-input"
+            value={formData.title}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea
+            name="description"
+            className="form-textarea"
+            value={formData.description}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Category</label>
+          <select
+            name="category"
+            className="form-select"
+            value={formData.category}
+            onChange={handleInputChange}
+          >
+            <option value="notes">📝 Notes</option>
+            <option value="docs">📖 Docs</option>
+            <option value="video">🎥 Videos</option>
+            <option value="ppt">📊 PPT</option>
+            <option value="code">💻 Code</option>
+            <option value="repository">📦 Repository</option>
+            <option value="image">🖼️ Image</option>
+          </select>
+        </div>
+      </Modal>
     </AdminLayout>
   );
 };

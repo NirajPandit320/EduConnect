@@ -2,6 +2,17 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../utils/apiConfig";
 import { getMediaUrl } from "../../utils/media";
+import {
+  FiBookmark,
+  FiDownload,
+  FiEdit2,
+  FiEye,
+  FiFlag,
+  FiHeart,
+  FiMessageCircle,
+  FiSearch,
+  FiTrash2,
+} from "react-icons/fi";
 
 const buildQuery = (filters) => {
   const params = new URLSearchParams();
@@ -34,8 +45,10 @@ const ResourcesList = ({ refreshKey }) => {
     try {
       const query = buildQuery(filters);
       const response = await fetch(`${API_BASE_URL}/api/resources?${query}`);
-      const data = await response.json();
-      setResources(Array.isArray(data) ? data : []);
+      const payload = await response.json();
+      const data = payload?.data ?? payload;
+      const list = Array.isArray(data) ? data : data?.resources;
+      setResources(Array.isArray(list) ? list : []);
     } catch (error) {
       setResources([]);
     } finally {
@@ -99,53 +112,71 @@ const ResourcesList = ({ refreshKey }) => {
   );
 
   return (
-    <div className="resources-list-card">
-      <div className="resource-toolbar">
-        <input
-          value={filters.q}
-          onChange={(event) => setFilters({ ...filters, q: event.target.value })}
-          placeholder="Search resources"
-        />
+    <div className="resources-list-card rm-list-card">
+      <div className="rm-toolbar-wrap">
+        <div className="rm-toolbar-title-block">
+          <h3>Resource Library</h3>
+          <p>Explore files, links, and shared learning materials.</p>
+        </div>
 
-        <input
-          value={filters.tag}
-          onChange={(event) => setFilters({ ...filters, tag: event.target.value })}
-          placeholder="Filter by tag"
-        />
+        <div className="resource-toolbar rm-toolbar">
+          <div className="rm-field rm-field-search">
+            <FiSearch />
+            <input
+              value={filters.q}
+              onChange={(event) => setFilters({ ...filters, q: event.target.value })}
+              placeholder="Search resources"
+            />
+          </div>
 
-        <select
-          value={filters.sort}
-          onChange={(event) => setFilters({ ...filters, sort: event.target.value })}
-        >
-          <option value="recent">Recent</option>
-          <option value="popular">Popular</option>
-          <option value="trending">Trending</option>
-        </select>
+          <input
+            className="rm-field-input"
+            value={filters.tag}
+            onChange={(event) => setFilters({ ...filters, tag: event.target.value })}
+            placeholder="Filter by tag"
+          />
+
+          <select
+            className="rm-field-input rm-sort"
+            value={filters.sort}
+            onChange={(event) => setFilters({ ...filters, sort: event.target.value })}
+          >
+            <option value="recent">Recent</option>
+            <option value="popular">Popular</option>
+            <option value="trending">Trending</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
-        <p>Loading resources...</p>
+        <p className="rm-state-message">Loading resources...</p>
       ) : resources.length === 0 ? (
-        <p>No resources found</p>
+        <p className="rm-state-message">No resources found</p>
       ) : (
-        <div className="resource-feed">
+        <div className="resource-feed rm-feed">
           {resources.map((resource) => {
             const isOwner = resource.uploadedBy === user?.uid;
             const commentValue = commentText[resource._id] || "";
+            const mediaUrl = resource.fileUrl ? getMediaUrl(resource.fileUrl) : "";
 
             return (
-              <article key={resource._id} className="resource-item">
-                <header>
-                  <h4>{resource.title}</h4>
-                  <p>
-                    By {resource.uploaderName} | {resource.category} | v{resource.version}
-                  </p>
+              <article key={resource._id} className="resource-item rm-item">
+                <header className="rm-item-header">
+                  <div>
+                    <h4>{resource.title}</h4>
+                    <p>
+                      By {resource.uploaderName} | {resource.category} | v{resource.version}
+                    </p>
+                  </div>
+                  <span className={`rm-visibility rm-visibility-${resource.visibility}`}>
+                    {resource.visibility}
+                  </span>
                 </header>
 
-                <p>{resource.description}</p>
+                <p className="rm-description">{resource.description || "No description provided."}</p>
 
                 {resource.tags?.length ? (
-                  <div className="resource-tags">
+                  <div className="resource-tags rm-tags">
                     {resource.tags.map((tag) => (
                       <span key={`${resource._id}-${tag}`}>#{tag}</span>
                     ))}
@@ -153,54 +184,74 @@ const ResourcesList = ({ refreshKey }) => {
                 ) : null}
 
                 {resource.fileUrl ? (
-                  <div className="resource-links">
+                  <div className="resource-links rm-links">
                     <a
-                      href={getMediaUrl(resource.fileUrl)}
+                      className="rm-btn rm-btn-primary"
+                      href={mediaUrl}
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => updateEngagement(resource._id, "view", { uid: user?.uid })}
                     >
-                      Open
+                      <FiEye /> Open
                     </a>
                     <button
+                      className="rm-btn rm-btn-secondary"
                       type="button"
                       onClick={() => updateEngagement(resource._id, "download", { uid: user?.uid })}
                     >
-                      Mark Download
+                      <FiDownload /> Mark Download
                     </button>
                   </div>
                 ) : null}
 
-                <div className="resource-metadata">
-                  <span>Visibility: {resource.visibility}</span>
+                <div className="resource-metadata rm-meta">
                   {resource.fileName ? <span>File: {resource.fileName}</span> : null}
                   {resource.mimeType ? <span>Type: {resource.mimeType}</span> : null}
-                  {resource.fileSize ? <span>Size: {(resource.fileSize / 1024 / 1024).toFixed(2)} MB</span> : null}
+                  {resource.fileSize ? (
+                    <span>Size: {(resource.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                  ) : null}
                 </div>
 
                 {resource.fileUrl && previewable(resource.fileUrl) ? (
                   <iframe
                     title={`preview-${resource._id}`}
-                    src={getMediaUrl(resource.fileUrl)}
-                    className="resource-preview"
+                    src={mediaUrl}
+                    className="resource-preview rm-preview"
                   />
                 ) : null}
 
-                <div className="resource-stats">
-                  <span>Views: {resource.viewCount || 0}</span>
-                  <span>Downloads: {resource.downloadCount || 0}</span>
-                  <span>Likes: {resource.likeCount || 0}</span>
-                  <span>Bookmarks: {resource.bookmarkCount || 0}</span>
+                <div className="resource-stats rm-stats">
+                  <span>
+                    <FiEye /> {resource.viewCount || 0}
+                  </span>
+                  <span>
+                    <FiDownload /> {resource.downloadCount || 0}
+                  </span>
+                  <span>
+                    <FiHeart /> {resource.likeCount || 0}
+                  </span>
+                  <span>
+                    <FiBookmark /> {resource.bookmarkCount || 0}
+                  </span>
                 </div>
 
-                <div className="resource-actions">
-                  <button type="button" onClick={() => updateEngagement(resource._id, "like")}>
-                    Like
-                  </button>
-                  <button type="button" onClick={() => updateEngagement(resource._id, "bookmark")}>
-                    Bookmark
+                <div className="resource-actions rm-actions">
+                  <button
+                    className="rm-btn rm-btn-ghost"
+                    type="button"
+                    onClick={() => updateEngagement(resource._id, "like")}
+                  >
+                    <FiHeart /> Like
                   </button>
                   <button
+                    className="rm-btn rm-btn-ghost"
+                    type="button"
+                    onClick={() => updateEngagement(resource._id, "bookmark")}
+                  >
+                    <FiBookmark /> Bookmark
+                  </button>
+                  <button
+                    className="rm-btn rm-btn-ghost"
                     type="button"
                     onClick={() =>
                       updateEngagement(resource._id, "report", {
@@ -208,22 +259,30 @@ const ResourcesList = ({ refreshKey }) => {
                       })
                     }
                   >
-                    Report
+                    <FiFlag /> Report
                   </button>
 
                   {isOwner ? (
                     <>
-                      <button type="button" onClick={() => setEditingResource(resource)}>
-                        Edit
+                      <button
+                        className="rm-btn rm-btn-secondary"
+                        type="button"
+                        onClick={() => setEditingResource(resource)}
+                      >
+                        <FiEdit2 /> Edit
                       </button>
-                      <button type="button" onClick={() => deleteResource(resource._id)}>
-                        Delete
+                      <button
+                        className="rm-btn rm-btn-danger"
+                        type="button"
+                        onClick={() => deleteResource(resource._id)}
+                      >
+                        <FiTrash2 /> Delete
                       </button>
                     </>
                   ) : null}
                 </div>
 
-                <div className="resource-comment-box">
+                <div className="resource-comment-box rm-comment-box">
                   <input
                     value={commentValue}
                     onChange={(event) =>
@@ -232,6 +291,7 @@ const ResourcesList = ({ refreshKey }) => {
                     placeholder="Add a comment"
                   />
                   <button
+                    className="rm-btn rm-btn-primary"
                     type="button"
                     onClick={() => {
                       if (!commentValue.trim()) return;
@@ -241,7 +301,7 @@ const ResourcesList = ({ refreshKey }) => {
                       setCommentText((prev) => ({ ...prev, [resource._id]: "" }));
                     }}
                   >
-                    Comment
+                    <FiMessageCircle /> Comment
                   </button>
                 </div>
               </article>
@@ -251,7 +311,7 @@ const ResourcesList = ({ refreshKey }) => {
       )}
 
       {editingResource ? (
-        <div className="resource-edit-modal">
+        <div className="resource-edit-modal rm-edit-modal">
           <h4>Edit Resource</h4>
           <input
             value={editingResource.title}
@@ -285,9 +345,13 @@ const ResourcesList = ({ refreshKey }) => {
             <option value="private">Private</option>
           </select>
 
-          <div className="resource-edit-actions">
-            <button type="button" onClick={saveEdit}>Save</button>
-            <button type="button" onClick={() => setEditingResource(null)}>Cancel</button>
+          <div className="resource-edit-actions rm-edit-actions">
+            <button className="rm-btn rm-btn-primary" type="button" onClick={saveEdit}>
+              Save
+            </button>
+            <button className="rm-btn rm-btn-secondary" type="button" onClick={() => setEditingResource(null)}>
+              Cancel
+            </button>
           </div>
         </div>
       ) : null}

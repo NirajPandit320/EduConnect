@@ -64,6 +64,7 @@ const toPublicResource = async (resource, viewerUid) => {
  */
 exports.uploadResource = async (req, res) => {
   try {
+    const isAdminRequest = Boolean(req.admin?.isAuthenticated);
     const {
       title,
       description,
@@ -77,18 +78,22 @@ exports.uploadResource = async (req, res) => {
     } = req.body;
 
     // Validation
+    const effectiveUploaderUid = uploaderUid || (isAdminRequest ? "admin" : "");
+
     const errors = validateRequiredFields(
-      { title, uploaderUid },
+      { title, uploaderUid: effectiveUploaderUid },
       ["title", "uploaderUid"]
     );
     if (errors.length) {
       return sendValidationError(res, "Validation failed", errors);
     }
 
-    // Verify uploader exists
-    const uploader = await User.findOne({ uid: uploaderUid });
-    if (!uploader) {
-      return sendError(res, "User not found", 404);
+    // Verify uploader exists for non-admin requests
+    if (!isAdminRequest) {
+      const uploader = await User.findOne({ uid: effectiveUploaderUid });
+      if (!uploader) {
+        return sendError(res, "User not found", 404);
+      }
     }
 
     const parsedTags = parseTags(tags);
@@ -106,7 +111,7 @@ exports.uploadResource = async (req, res) => {
         title: title.trim(),
         description: sanitizeText(description || ""),
         fileUrl,
-        uploadedBy: uploaderUid,
+        uploadedBy: effectiveUploaderUid,
         tags: parsedTags,
         visibility: visibility || "public",
         allowedUsers: visibility === "private" ? parsedAllowedUsers : [],
@@ -125,7 +130,7 @@ exports.uploadResource = async (req, res) => {
         fileName: file.originalname,
         fileSize: file.size,
         mimeType: file.mimetype,
-        uploadedBy: uploaderUid,
+        uploadedBy: effectiveUploaderUid,
         tags: parsedTags,
         visibility: visibility || "public",
         allowedUsers: visibility === "private" ? parsedAllowedUsers : [],
@@ -135,9 +140,9 @@ exports.uploadResource = async (req, res) => {
     }
 
     const created = await Resource.insertMany(payload);
-    const data = await Promise.all(created.map((resource) => toPublicResource(resource, uploaderUid)));
+    const data = await Promise.all(created.map((resource) => toPublicResource(resource, effectiveUploaderUid)));
 
-    log.info("Resource uploaded", { uploaderUid, resourceCount: created.length });
+    log.info("Resource uploaded", { uploaderUid: effectiveUploaderUid, resourceCount: created.length, isAdminRequest });
     return sendSuccess(res, data, "Resource uploaded successfully", 201);
   } catch (error) {
     log.error("Upload resource error", error);
@@ -150,6 +155,7 @@ exports.uploadResource = async (req, res) => {
  */
 exports.getResources = async (req, res) => {
   try {
+    const isAdminRequest = Boolean(req.admin?.isAuthenticated);
     const {
       q,
       tag,
@@ -161,7 +167,9 @@ exports.getResources = async (req, res) => {
       limit = 10,
     } = req.query;
 
-    const accessFilter = !uid
+    const accessFilter = isAdminRequest
+      ? {}
+      : !uid
       ? { visibility: "public" }
       : {
           $or: [
@@ -176,14 +184,18 @@ exports.getResources = async (req, res) => {
     if (visibility === "public") {
       filterParts.push({ visibility: "public" });
     } else if (visibility === "private") {
-      if (!uid) {
+      if (!uid && !isAdminRequest) {
         return sendSuccess(res, { resources: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } }, "No private resources");
       }
 
-      filterParts.push({
-        visibility: "private",
-        $or: [{ uploadedBy: uid }, { allowedUsers: uid }],
-      });
+      if (isAdminRequest) {
+        filterParts.push({ visibility: "private" });
+      } else {
+        filterParts.push({
+          visibility: "private",
+          $or: [{ uploadedBy: uid }, { allowedUsers: uid }],
+        });
+      }
     } else {
       filterParts.push(accessFilter);
     }
@@ -226,7 +238,11 @@ exports.getResources = async (req, res) => {
 
     const total = await Resource.countDocuments(query);
 
-    const data = await Promise.all(resources.map((resource) => toPublicResource(resource, uid)));
+    const data = await Promise.all(
+      resources.map((resource) =>
+        toPublicResource(resource, isAdminRequest ? resource.uploadedBy : uid)
+      )
+    );
 
     log.info("Resources fetched", { uid, resourceCount: data.length, total });
     return sendSuccess(
@@ -253,11 +269,12 @@ exports.getResources = async (req, res) => {
  */
 exports.updateResource = async (req, res) => {
   try {
+    const isAdminRequest = Boolean(req.admin?.isAuthenticated);
     const { id } = req.params;
     const { uid, title, description, visibility, tags, category, allowedUsers } = req.body;
 
     // Validation
-    if (!uid || !id) {
+    if ((!uid && !isAdminRequest) || !id) {
       return sendValidationError(res, "User ID and Resource ID required");
     }
 
@@ -267,7 +284,7 @@ exports.updateResource = async (req, res) => {
     }
 
     // Authorization - only owner can edit
-    if (resource.uploadedBy !== uid) {
+    if (!isAdminRequest && resource.uploadedBy !== uid) {
       return sendError(res, "Not allowed to edit this resource", 403);
     }
 
@@ -298,8 +315,12 @@ exports.updateResource = async (req, res) => {
 
     await resource.save();
 
-    log.info("Resource updated", { resourceId: id, uid });
-    return sendSuccess(res, await toPublicResource(resource, uid), "Resource updated successfully");
+    log.info("Resource updated", { resourceId: id, uid, isAdminRequest });
+    return sendSuccess(
+      res,
+      await toPublicResource(resource, isAdminRequest ? resource.uploadedBy : uid),
+      "Resource updated successfully"
+    );
   } catch (error) {
     log.error("Update resource error", error);
     return sendError(res, "Update failed", 500);
@@ -311,11 +332,12 @@ exports.updateResource = async (req, res) => {
  */
 exports.deleteResource = async (req, res) => {
   try {
+    const isAdminRequest = Boolean(req.admin?.isAuthenticated);
     const { id } = req.params;
     const { uid } = req.body;
 
     // Validation
-    if (!uid || !id) {
+    if ((!uid && !isAdminRequest) || !id) {
       return sendValidationError(res, "User ID and Resource ID required");
     }
 
@@ -325,13 +347,13 @@ exports.deleteResource = async (req, res) => {
     }
 
     // Authorization - only owner can delete
-    if (resource.uploadedBy !== uid) {
+    if (!isAdminRequest && resource.uploadedBy !== uid) {
       return sendError(res, "Not allowed to delete this resource", 403);
     }
 
     await Resource.findByIdAndDelete(id);
 
-    log.info("Resource deleted", { resourceId: id, uid });
+    log.info("Resource deleted", { resourceId: id, uid, isAdminRequest });
     return sendSuccess(res, { deletedResourceId: id }, "Resource deleted successfully");
   } catch (error) {
     log.error("Delete resource error", error);

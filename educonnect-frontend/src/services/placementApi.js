@@ -7,17 +7,33 @@ const placementApi = axios.create({
 
 export const fetchJobs = async () => {
   const response = await placementApi.get("/jobs");
-  return response.data;
+  const payload = response.data;
+  const data = payload?.data ?? payload;
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return Array.isArray(data?.jobs) ? data.jobs : [];
 };
 
 export const fetchEligibility = async (uid) => {
   const response = await placementApi.get(`/jobs/eligibility/${uid}`);
-  return response.data;
+  const payload = response.data;
+  const data = payload?.data ?? payload;
+
+  return {
+    eligibleJobs: Array.isArray(data?.eligibleJobs) ? data.eligibleJobs : [],
+    notEligibleJobs: Array.isArray(data?.notEligibleJobs) ? data.notEligibleJobs : [],
+  };
 };
 
 export const fetchApplications = async (uid) => {
   const response = await placementApi.get(`/applications/${uid}`);
-  return response.data;
+  const payload = response.data;
+  const data = payload?.data ?? payload;
+
+  return Array.isArray(data) ? data : [];
 };
 
 export const applyToJob = async ({ jobId, userUid }) => {

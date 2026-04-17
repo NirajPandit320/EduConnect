@@ -1,6 +1,7 @@
 import ResourcesList from "../components/resources/ResourcesList";
 import ResourceUpload from "../components/resources/ResourceUpload";
 import { useState } from "react";
+import "../components/resources/resources-ui.css";
 
 export default function ResourcesPage() {
   const [refreshKey, setRefreshKey] = useState(0);
