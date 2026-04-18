@@ -13,27 +13,53 @@ const QuizHistory = () => {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
+    if (!user?.uid) {
+      setHistory([]);
+      return undefined;
+    }
+
     const q = query(
-      collection(db, "quizResults"),
+      collection(db, "scores"),
       where("uid", "==", user.uid)
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map((doc) => doc.data());
+      const data = snap.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => {
+          const aMs = a?.createdAt?.toMillis?.() || 0;
+          const bMs = b?.createdAt?.toMillis?.() || 0;
+          return bMs - aMs;
+        });
+
       setHistory(data);
     });
 
     return () => unsub();
-  }, [user]);
+  }, [user?.uid]);
+
+  const formatCreatedAt = (createdAt) => {
+    if (!createdAt) return "Date unavailable";
+
+    const millis =
+      typeof createdAt?.toMillis === "function"
+        ? createdAt.toMillis()
+        : createdAt?.seconds
+          ? createdAt.seconds * 1000
+          : null;
+
+    if (!millis) return "Date unavailable";
+    return new Date(millis).toLocaleString();
+  };
 
   return (
     <div className="history-container">
       <h2>📜 Quiz History</h2>
 
-      {history.map((h, i) => (
-        <div key={i} className="history-card">
-          <p>Score: {h.score}/{h.total}</p>
-          <p>{new Date(h.createdAt.seconds * 1000).toLocaleString()}</p>
+      {history.map((h) => (
+        <div key={h.id} className="history-card">
+          <p>Score: {h.score}/{h.totalQuestions ?? h.total}</p>
+          <p>{formatCreatedAt(h.createdAt)}</p>
         </div>
       ))}
     </div>

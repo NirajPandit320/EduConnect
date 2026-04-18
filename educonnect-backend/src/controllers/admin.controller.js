@@ -113,11 +113,16 @@ exports.deletePostAdmin = async (req, res) => {
       return sendError(res, "Post ID is required", 400);
     }
 
-    const post = await Post.findByIdAndDelete(id);
+    const post = await Post.findById(id);
 
     if (!post) {
       return sendError(res, "Post not found", 404);
     }
+
+    post.deleted = true;
+    post.deletedAt = new Date();
+    post.deletedBy = req.admin?.email || null;
+    await post.save();
 
     log.info("Admin deleted post", { postId: id, admin: req.admin?.email });
 

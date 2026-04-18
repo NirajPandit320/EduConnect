@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
-  FaHome,
-  FaFileAlt,
-  FaCalendarAlt,
-  FaQuestionCircle,
-  FaComments,
-  FaBook,
-  FaBriefcase,
-  FaTrophy,
-  FaUser,
-  FaCog,
-  FaBell,
-  FaSignOutAlt,
-  FaBars,
-} from "react-icons/fa";
+  FiHome,
+  FiFileText,
+  FiCalendar,
+  FiHelpCircle,
+  FiMessageSquare,
+  FiBook,
+  FiBriefcase,
+  FiTrendingUp,
+  FiUser,
+  FiSettings,
+  FiBell,
+  FiLogOut,
+  FiMenu,
+} from "react-icons/fi";
 
 import { signOut } from "firebase/auth";
 import { auth } from "../../utils/firebase";
@@ -43,17 +43,17 @@ const Sidebar = ({
   };
 
   const menuItems = [
-    { key: "dashboard", icon: <FaHome />, label: "Dashboard" },
-    { key: "posts", icon: <FaFileAlt />, label: "Posts" },
-    { key: "events", icon: <FaCalendarAlt />, label: "Events" },
-    { key: "quizzes", icon: <FaQuestionCircle />, label: "Quizzes" },
-    { key: "chat", icon: <FaComments />, label: "Chat" },
-    { key: "resources", icon: <FaBook />, label: "Resources" },
-    { key: "placement", icon: <FaBriefcase />, label: "Placement" },
-    { key: "leaderboard", icon: <FaTrophy />, label: "Leaderboard" },
-    { key: "profile", icon: <FaUser />, label: "Profile" },
-    { key: "settings", icon: <FaCog />, label: "Settings" },
-    { key: "notifications", icon: <FaBell />, label: "Notifications" },
+    { key: "dashboard", icon: <FiHome />, label: "Dashboard" },
+    { key: "posts", icon: <FiFileText />, label: "Posts" },
+    { key: "events", icon: <FiCalendar />, label: "Events" },
+    { key: "quizzes", icon: <FiHelpCircle />, label: "Quizzes" },
+    { key: "chat", icon: <FiMessageSquare />, label: "Chat" },
+    { key: "resources", icon: <FiBook />, label: "Resources" },
+    { key: "placement", icon: <FiBriefcase />, label: "Placement" },
+    { key: "leaderboard", icon: <FiTrendingUp />, label: "Leaderboard" },
+    { key: "profile", icon: <FiUser />, label: "Profile" },
+    { key: "settings", icon: <FiSettings />, label: "Settings" },
+    { key: "notifications", icon: <FiBell />, label: "Notifications" },
   ];
 
   useEffect(() => {
@@ -143,7 +143,7 @@ const Sidebar = ({
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!isCollapsed}
         >
-          <FaBars />
+          <FiMenu />
         </button>
         {!isCollapsed && (
           <div className="sidebar-brand" aria-label="EduConnect">
@@ -188,7 +188,7 @@ const Sidebar = ({
       </nav>
 
       <button type="button" className="logout-btn" onClick={handleLogout} title="Logout">
-        <FaSignOutAlt />
+        <FiLogOut />
         <span className="menu-label">Logout</span>
       </button>
     </aside>

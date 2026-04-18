@@ -1,20 +1,22 @@
 import { memo } from "react";
-import { ReactComponent as CameraIcon } from "eva-icons/outline/svg/camera-outline.svg";
-import { ReactComponent as EditIcon } from "eva-icons/outline/svg/edit-2-outline.svg";
-import { ReactComponent as EyeOffIcon } from "eva-icons/outline/svg/eye-off-outline.svg";
-import { ReactComponent as HeartIcon } from "eva-icons/outline/svg/heart-outline.svg";
-import { ReactComponent as MessageCircleIcon } from "eva-icons/outline/svg/message-circle-outline.svg";
-import { ReactComponent as PaperPlaneIcon } from "eva-icons/outline/svg/paper-plane-outline.svg";
-import { ReactComponent as TrashIcon } from "eva-icons/outline/svg/trash-2-outline.svg";
+import {
+  FiCamera,
+  FiEdit2,
+  FiEyeOff,
+  FiHeart,
+  FiMessageCircle,
+  FiSend,
+  FiTrash2,
+} from "react-icons/fi";
 
 const ICON_MAP = {
-  image: CameraIcon,
-  hide: EyeOffIcon,
-  edit: EditIcon,
-  delete: TrashIcon,
-  like: HeartIcon,
-  comment: MessageCircleIcon,
-  post: PaperPlaneIcon,
+  image: FiCamera,
+  hide: FiEyeOff,
+  edit: FiEdit2,
+  delete: FiTrash2,
+  like: FiHeart,
+  comment: FiMessageCircle,
+  post: FiSend,
 };
 
 const PostActionIcon = ({ name, className = "", active = false }) => {
@@ -23,12 +25,12 @@ const PostActionIcon = ({ name, className = "", active = false }) => {
   if (!Icon) return null;
 
   return (
-    <span
-      className={`post-eva-icon ${active ? "is-active" : ""} ${className}`.trim()}
+    <Icon
+      className={`post-action-icon ${active ? "is-active" : ""} ${className}`.trim()}
       aria-hidden="true"
-    >
-      <Icon className="post-eva-icon-svg" focusable="false" />
-    </span>
+      size={18}
+      strokeWidth={2}
+    />
   );
 };
 

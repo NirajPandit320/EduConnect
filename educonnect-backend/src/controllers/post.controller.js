@@ -46,7 +46,9 @@ exports.createPost = async (req, res) => {
       imageFiles
         .slice(0, 5)
         .map((file) =>
-          getStoredFileReference(file, "educonnect/posts", "image")
+          getStoredFileReference(file, "educonnect/posts", "image", {
+            strict: true,
+          })
             .catch(err => {
               log.error("Individual file upload failed", {
                 filename: file.originalname,
@@ -61,6 +63,14 @@ exports.createPost = async (req, res) => {
     const uploadedImages = images
       .filter(result => result.status === "fulfilled" && result.value)
       .map(result => result.value);
+
+    if (imageFiles.length > 0 && uploadedImages.length === 0) {
+      return sendError(
+        res,
+        "Image upload failed. Check Cloudinary configuration and credentials.",
+        500
+      );
+    }
 
     log.info("Image upload complete", {
       requested: imageFiles.length,
@@ -121,7 +131,7 @@ exports.getPosts = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
-    const posts = await Post.find()
+    const posts = await Post.find({ deleted: { $ne: true } })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -138,7 +148,7 @@ exports.getPosts = async (req, res) => {
       })
     );
 
-    const total = await Post.countDocuments();
+    const total = await Post.countDocuments({ deleted: { $ne: true } });
 
     return sendSuccess(
       res,
@@ -174,7 +184,7 @@ exports.toggleLike = async (req, res) => {
 
     // Find post
     const post = await Post.findById(postId);
-    if (!post) {
+    if (!post || post.deleted) {
       return sendError(res, "Post not found", 404);
     }
 
@@ -239,7 +249,7 @@ exports.addComment = async (req, res) => {
 
     // Find post
     const post = await Post.findById(postId);
-    if (!post) {
+    if (!post || post.deleted) {
       return sendError(res, "Post not found", 404);
     }
 
@@ -299,7 +309,7 @@ exports.deleteComment = async (req, res) => {
 
     // Find post
     const post = await Post.findById(postId);
-    if (!post) {
+    if (!post || post.deleted) {
       return sendError(res, "Post not found", 404);
     }
 
@@ -348,7 +358,7 @@ exports.editPost = async (req, res) => {
 
     // Find post
     const post = await Post.findById(postId);
-    if (!post) {
+    if (!post || post.deleted) {
       return sendError(res, "Post not found", 404);
     }
 
@@ -393,8 +403,11 @@ exports.deletePost = async (req, res) => {
       return sendError(res, "Not authorized to delete this post", 403);
     }
 
-    // Delete
-    await Post.findByIdAndDelete(postId);
+    // Soft delete so the record remains in the database
+    post.deleted = true;
+    post.deletedAt = new Date();
+    post.deletedBy = uid;
+    await post.save();
 
     log.info("Post deleted", { postId, uid, isAdmin });
     return sendSuccess(res, { deletedPostId: postId }, "Post deleted successfully");

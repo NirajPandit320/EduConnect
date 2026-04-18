@@ -53,6 +53,19 @@ const postSchema = new mongoose.Schema(
         },
       },
     ],
+    deleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -112,8 +112,15 @@ const uploadToCloudinary = async (file, folder, resourceType = "auto") => {
   }
 };
 
-const getStoredFileReference = async (file, folder, resourceType = "auto") => {
+const getStoredFileReference = async (
+  file,
+  folder,
+  resourceType = "auto",
+  options = {}
+) => {
   if (!file) return "";
+
+  const { strict = false } = options;
 
   // Try Cloudinary first if configured
   if (isCloudinaryConfigured) {
@@ -121,12 +128,19 @@ const getStoredFileReference = async (file, folder, resourceType = "auto") => {
       const result = await uploadToCloudinary(file, folder, resourceType);
       return result.secure_url;
     } catch (error) {
-      log.error("Cloudinary upload failed, would fallback to disk", {
+      log.error("Cloudinary upload failed", {
         filename: file.originalname,
         error: error.message,
       });
-      // Fall through to disk storage as fallback
+
+      if (strict) {
+        throw error;
+      }
+
+      // Fall through to disk storage as fallback for legacy modules
     }
+  } else if (strict) {
+    throw new Error("Cloudinary not configured");
   }
 
   // Fallback: Return filename for disk storage at /uploads/{filename}
