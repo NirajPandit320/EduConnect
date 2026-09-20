@@ -514,16 +514,13 @@ button:disabled {
   .auth-left {
     width: 100%;
     min-height: auto;
-
-    padding: 40px 24px;
+    padding: 32px 16px;
   }
 
   .auth-right {
     width: 100%;
-    min-height: 300px;
-
-    padding: 40px 24px;
-
+    min-height: auto;
+    padding: 40px 16px;
     text-align: center;
   }
 
@@ -537,8 +534,9 @@ button:disabled {
   }
 
   .auth-left input {
-    min-height: 46px;
-    font-size: 15px;
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
   }
 
   .switch-text {
@@ -547,11 +545,11 @@ button:disabled {
   }
 
   .auth-right h1 {
-    font-size: clamp(30px, 10vw, 44px);
+    font-size: clamp(28px, 10vw, 40px);
   }
 
   .auth-right h2 {
-    font-size: clamp(22px, 7vw, 32px);
+    font-size: clamp(20px, 7vw, 30px);
   }
 }
 
@@ -563,38 +561,28 @@ button:disabled {
 @media (max-width: 480px) {
 
   .auth-left {
-    padding: 30px 18px;
+    padding: 28px 16px;
   }
 
   .auth-right {
-    min-height: 240px;
-    padding: 30px 18px;
+    min-height: auto;
+    padding: 35px 16px;
   }
 
   .auth-left h2 {
-    font-size: 23px;
+    font-size: 24px;
   }
 
   .auth-left p {
     font-size: 13px;
-    margin-bottom: 20px;
-  }
-
-  .auth-left input {
-    min-height: 44px;
-    margin-bottom: 14px;
-  }
-
-  .switch-text {
-    font-size: 12px;
   }
 
   .auth-right h1 {
-    font-size: 30px;
+    font-size: 28px;
   }
 
   .auth-right h2 {
-    font-size: 22px;
+    font-size: 20px;
   }
 }
 
@@ -606,20 +594,20 @@ button:disabled {
 @media (max-width: 360px) {
 
   .auth-left {
-    padding: 25px 14px;
+    padding: 24px 12px;
   }
 
   .auth-right {
-    min-height: 220px;
-    padding: 25px 14px;
+    min-height: auto;
+    padding: 30px 12px;
   }
 
   .auth-right h1 {
-    font-size: 27px;
+    font-size: 26px;
   }
 
   .auth-right h2 {
-    font-size: 20px;
+    font-size: 19px;
   }
 }
 
