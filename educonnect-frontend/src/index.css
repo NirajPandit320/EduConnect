@@ -7553,3 +7553,72 @@ body.dark-theme .comment-text {
     transform: translateX(0);
   }
 }
+
+/* ================= AUTHENTICATION RESPONSIVE OVERRIDE =================
+   Kept at the end of the stylesheet because older auth rules appear above
+   several global responsive sections. */
+@media (max-width: 768px) {
+  .auth-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    overflow: visible;
+    background: #f4f6fb;
+  }
+
+  .auth-left,
+  .auth-right {
+    width: 100%;
+    min-height: 0;
+    height: auto;
+    flex: 0 0 auto;
+  }
+
+  .auth-left {
+    min-height: 100dvh;
+    padding: 40px 24px !important;
+    flex: 1 0 auto;
+    justify-content: center;
+    text-align: left;
+  }
+
+  .auth-left h2 {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  .auth-left p {
+    margin-bottom: 20px;
+  }
+
+  .auth-left input {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+  }
+
+  .auth-left button {
+    margin-top: 4px;
+  }
+
+  .switch-text {
+    margin-top: 18px;
+    text-align: center;
+  }
+
+  .auth-right {
+    display: none;
+  }
+
+}
+
+@media (max-width: 360px) {
+  .auth-left {
+    padding: 32px 16px 28px !important;
+  }
+
+  .auth-right {
+    padding: 24px 16px 28px !important;
+  }
+}
