@@ -7,28 +7,39 @@
   font-family: "Segoe UI", sans-serif;
 }
 
-/* ================= ENHANCED AUTH PAGE VISUALS ================= */
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
 
 body {
   background: linear-gradient(135deg, #f4f6fb 0%, #f0ebff 100%);
   color: #1f2937;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
+/* ================= AUTH WRAPPER ================= */
+
 .auth-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
   border-radius: 0;
 }
 
-@media (max-width: 768px) {
-  .auth-wrapper {
-    box-shadow: none;
-    border-radius: 0;
-  }
-}
+/* ================= LEFT SIDE ================= */
 
 .auth-left {
   position: relative;
+  width: 50%;
+  min-height: 100vh;
   overflow: hidden;
 }
 
@@ -39,7 +50,13 @@ body {
   right: -50%;
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent);
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+
   border-radius: 50%;
   animation: floatGlow 6s ease-in-out infinite;
 }
@@ -51,21 +68,21 @@ body {
   left: -30%;
   width: 250px;
   height: 250px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent);
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+
   border-radius: 50%;
   animation: floatGlow 8s ease-in-out infinite reverse;
-}
-
-@media (max-width: 768px) {
-  .auth-left::before,
-  .auth-left::after {
-    display: none;
-  }
 }
 
 .auth-left h2 {
   position: relative;
   z-index: 1;
+
   font-weight: 600;
   letter-spacing: -0.5px;
 }
@@ -73,17 +90,23 @@ body {
 .auth-left p {
   position: relative;
   z-index: 1;
+
   line-height: 1.6;
 }
 
+/* ================= RIGHT SIDE ================= */
+
 .auth-right {
   position: relative;
+  width: 50%;
+  min-height: 100vh;
   overflow: hidden;
 }
 
 .auth-right h1 {
   position: relative;
   z-index: 1;
+
   font-weight: 800;
   letter-spacing: -1px;
   line-height: 1.2;
@@ -92,6 +115,7 @@ body {
 .auth-right h2 {
   position: relative;
   z-index: 1;
+
   margin: 0;
   opacity: 0.95;
   font-weight: 300;
@@ -103,35 +127,47 @@ body {
 button {
   border: none;
   cursor: pointer;
+
   padding: clamp(8px, 2vw, 10px) clamp(14px, 3vw, 18px);
+
   border-radius: 8px;
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+
+  background: linear-gradient(
+    135deg,
+    #8b5cf6,
+    #6d28d9
+  );
+
   color: white;
+
   font-weight: 500;
   font-size: clamp(12px, 2vw, 14px);
-  transition: all 0.25s ease;
-  min-height: 36px;
-}
 
-@media (max-width: 480px) {
-  button {
-    min-height: 44px;
-  }
+  transition: all 0.25s ease;
+
+  min-height: 36px;
 }
 
 button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4);
+
+  box-shadow:
+    0 6px 15px rgba(139, 92, 246, 0.4);
+}
+
+button:active {
+  transform: scale(0.95);
 }
 
 button:disabled {
   background: #ccc;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-/* ================= AUTH PAGE ================= */
+/* ================= AUTH PAGE ANIMATION ================= */
 
-/* PAGE FADE ANIMATION */
 .main-content {
   animation: fadeIn 0.4s ease;
 }
@@ -141,64 +177,219 @@ button:disabled {
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* LIKE BUTTON ANIMATION */
+/* ================= LIKE BUTTON ================= */
+
 .post-actions button:active {
   transform: scale(0.9);
 }
 
-/* POST CARD ANIMATION */
+/* ================= POST CARD ================= */
+
 .post-card {
   transition: all 0.3s ease;
 }
 
 .post-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.1);
 }
 
-/* BUTTON PRESS EFFECT */
-button:active {
-  transform: scale(0.95);
-}
+/* ================================================= */
+/* ================= TABLET ======================== */
+/* ================================================= */
 
-/* ================= RESPONSIVE AUTH PAGE ================= */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+
   .auth-wrapper {
-    flex-direction: column;
+    min-height: 100vh;
   }
 
   .auth-left,
   .auth-right {
+    width: 50%;
+  }
+
+  .auth-left,
+  .auth-right {
+    padding-left: 30px !important;
+    padding-right: 30px !important;
+  }
+
+  .auth-right h1 {
+    font-size: clamp(28px, 4vw, 40px);
+  }
+
+  .auth-right h2 {
+    font-size: clamp(18px, 2.5vw, 24px);
+  }
+}
+
+/* ================================================= */
+/* ================= MOBILE ======================== */
+/* ================================================= */
+
+@media (max-width: 768px) {
+
+  body {
+    background: #f4f6fb;
+  }
+
+  .auth-wrapper {
+    flex-direction: column;
+
     width: 100%;
+    min-height: 100vh;
+
+    margin: 0;
+    padding: 0;
+
+    border-radius: 0;
+    box-shadow: none;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* LEFT SECTION */
+
+  .auth-left {
+    width: 100%;
+    min-height: auto;
+
+    padding: 30px 20px !important;
+
+    text-align: center;
+  }
+
+  /* Remove decorative circles on mobile */
+
+  .auth-left::before,
+  .auth-left::after {
+    display: none;
+  }
+
+  .auth-left h2 {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+
+  .auth-left p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* RIGHT SECTION */
+
+  .auth-right {
+    width: 100%;
+    min-height: auto;
+
     padding: 30px 20px !important;
   }
 
+  .auth-right h1 {
+    font-size: clamp(26px, 7vw, 36px);
+
+    letter-spacing: -0.5px;
+  }
+
+  .auth-right h2 {
+    font-size: clamp(18px, 5vw, 24px);
+  }
+
+  /* BUTTON */
+
+  button {
+    width: 100%;
+    min-height: 44px;
+
+    padding: 10px 16px;
+
+    font-size: 14px;
+  }
+}
+
+/* ================================================= */
+/* ================= SMALL MOBILE ================== */
+/* ================================================= */
+
+@media (max-width: 480px) {
+
+  .auth-wrapper {
+    min-height: 100dvh;
+  }
+
   .auth-left {
-    padding-top: 20px !important;
+    padding: 25px 16px !important;
   }
 
   .auth-right {
-    padding-bottom: 20px !important;
+    padding: 25px 16px !important;
+  }
+
+  .auth-left h2 {
+    font-size: 22px;
+  }
+
+  .auth-left p {
+    font-size: 13px;
+  }
+
+  .auth-right h1 {
+    font-size: 26px;
+  }
+
+  .auth-right h2 {
+    font-size: 18px;
+  }
+
+  button {
+    min-height: 44px;
+    font-size: 14px;
   }
 }
 
-.auth-wrapper {
-  display: flex;
-  flex-direction: row;
-  min-height: 100vh;
+/* ================================================= */
+/* ================= VERY SMALL ==================== */
+/* ================================================= */
+
+@media (max-width: 360px) {
+
+  .auth-left,
+  .auth-right {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .auth-right h1 {
+    font-size: 23px;
+  }
+
+  .auth-right h2 {
+    font-size: 17px;
+  }
 }
+
+/* ================================================= */
+/* ================================================= */
+/* ================= AUTH LEFT ===================== */
+/* ================================================= */
 
 .auth-left {
   width: 40%;
   background: #111827;
   color: white;
+
   padding: clamp(40px, 8vw, 80px);
+
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -213,16 +404,23 @@ button:active {
   color: #9ca3af;
   margin-bottom: 30px;
   font-size: clamp(13px, 2vw, 15px);
+  line-height: 1.6;
 }
 
 .auth-left input {
+  width: 100%;
+
   padding: clamp(10px, 2vw, 14px);
   margin-bottom: 18px;
+
   border-radius: 8px;
   border: none;
+
   background: #1f2937;
   color: white;
+
   font-size: clamp(14px, 2vw, 16px);
+
   min-height: 44px;
 }
 
@@ -233,6 +431,7 @@ button:active {
 .switch-text {
   margin-top: 20px;
   font-size: clamp(12px, 2vw, 14px);
+  line-height: 1.5;
 }
 
 .switch-text span {
@@ -240,28 +439,194 @@ button:active {
   cursor: pointer;
 }
 
+
+/* ================================================= */
+/* ================= AUTH RIGHT ==================== */
+/* ================================================= */
+
 .auth-right {
   width: 60%;
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+
+  background: linear-gradient(
+    135deg,
+    #8b5cf6,
+    #6d28d9
+  );
+
   color: white;
+
   display: flex;
   flex-direction: column;
   justify-content: center;
+
   padding: clamp(40px, 8vw, 80px);
 }
 
 .auth-right h1 {
   font-size: clamp(24px, 8vw, 52px);
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .auth-right h2 {
   font-size: clamp(20px, 6vw, 42px);
   font-weight: 300;
+  line-height: 1.3;
 }
 
 
-/* ================= ENHANCED DASHBOARD PROFILE VISUALS ================= */
+/* ================================================= */
+/* ================= TABLET ======================== */
+/* ================================================= */
+
+@media (max-width: 992px) {
+
+  .auth-left {
+    width: 45%;
+    padding: 50px 35px;
+  }
+
+  .auth-right {
+    width: 55%;
+    padding: 50px 35px;
+  }
+
+  .auth-left h2 {
+    font-size: 26px;
+  }
+
+  .auth-right h1 {
+    font-size: clamp(30px, 6vw, 44px);
+  }
+
+  .auth-right h2 {
+    font-size: clamp(22px, 4vw, 34px);
+  }
+}
+
+
+/* ================================================= */
+/* ================= MOBILE ======================== */
+/* ================================================= */
+
+@media (max-width: 768px) {
+
+  .auth-left {
+    width: 100%;
+    min-height: auto;
+
+    padding: 40px 24px;
+  }
+
+  .auth-right {
+    width: 100%;
+    min-height: 300px;
+
+    padding: 40px 24px;
+
+    text-align: center;
+  }
+
+  .auth-left h2 {
+    font-size: 26px;
+  }
+
+  .auth-left p {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .auth-left input {
+    min-height: 46px;
+    font-size: 15px;
+  }
+
+  .switch-text {
+    margin-top: 16px;
+    font-size: 13px;
+  }
+
+  .auth-right h1 {
+    font-size: clamp(30px, 10vw, 44px);
+  }
+
+  .auth-right h2 {
+    font-size: clamp(22px, 7vw, 32px);
+  }
+}
+
+
+/* ================================================= */
+/* ================= SMALL MOBILE ================== */
+/* ================================================= */
+
+@media (max-width: 480px) {
+
+  .auth-left {
+    padding: 30px 18px;
+  }
+
+  .auth-right {
+    min-height: 240px;
+    padding: 30px 18px;
+  }
+
+  .auth-left h2 {
+    font-size: 23px;
+  }
+
+  .auth-left p {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .auth-left input {
+    min-height: 44px;
+    margin-bottom: 14px;
+  }
+
+  .switch-text {
+    font-size: 12px;
+  }
+
+  .auth-right h1 {
+    font-size: 30px;
+  }
+
+  .auth-right h2 {
+    font-size: 22px;
+  }
+}
+
+
+/* ================================================= */
+/* =============== VERY SMALL MOBILE ============== */
+/* ================================================= */
+
+@media (max-width: 360px) {
+
+  .auth-left {
+    padding: 25px 14px;
+  }
+
+  .auth-right {
+    min-height: 220px;
+    padding: 25px 14px;
+  }
+
+  .auth-right h1 {
+    font-size: 27px;
+  }
+
+  .auth-right h2 {
+    font-size: 20px;
+  }
+}
+
+
+/* ================================================= */
+/* ============ DASHBOARD VARIABLES ================ */
+/* ================================================= */
 
 :root {
   --dashboard-primary: #0f6bff;
@@ -275,29 +640,73 @@ button:active {
   --dashboard-glow: rgba(15, 107, 255, 0.3);
 }
 
+
+/* ================================================= */
+/* ================= DASHBOARD CARD ================ */
+/* ================================================= */
+
 .dashboard-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  padding: clamp(24px, 5vw, 40px);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(15, 107, 255, 0.1), 0 0 1px rgba(15, 107, 255, 0.3);
+  width: 100%;
   max-width: 600px;
+
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f8fafc 100%
+  );
+
+  padding: clamp(20px, 5vw, 40px);
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 12px 40px rgba(15, 107, 255, 0.1),
+    0 0 1px rgba(15, 107, 255, 0.3);
+
   margin: auto;
-  animation: fadeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  animation: fadeIn 0.5s cubic-bezier(
+    0.34,
+    1.56,
+    0.64,
+    1
+  );
+
   border: 1.5px solid var(--dashboard-border);
+
   backdrop-filter: blur(10px);
+
   transition: all 0.3s ease;
 }
 
+
+/* ================================================= */
+/* ================= DASHBOARD TITLE =============== */
+/* ================================================= */
+
 .dashboard-title {
-  background: linear-gradient(120deg, var(--dashboard-primary), var(--dashboard-secondary));
+  background: linear-gradient(
+    120deg,
+    var(--dashboard-primary),
+    var(--dashboard-secondary)
+  );
+
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+
   font-weight: 800;
   letter-spacing: -0.6px;
+
   font-size: clamp(22px, 5vw, 32px);
+
   margin: 0 0 24px 0;
 }
+
+
+/* ================================================= */
+/* ================= PROFILE INFO ================== */
+/* ================================================= */
 
 .profile-info,
 .profile-edit {
@@ -306,32 +715,136 @@ button:active {
   gap: 20px;
 }
 
+
+/* ================================================= */
+/* ================= PROFILE ROW =================== */
+/* ================================================= */
+
 .profile-row {
   display: flex;
   flex-direction: column;
   gap: 8px;
+
   padding: clamp(14px, 2vw, 18px);
-  background: linear-gradient(135deg, rgba(15, 107, 255, 0.03), rgba(124, 58, 237, 0.03));
+
+  background: linear-gradient(
+    135deg,
+    rgba(15, 107, 255, 0.03),
+    rgba(124, 58, 237, 0.03)
+  );
+
   border-radius: 14px;
+
   border: 1.5px solid var(--dashboard-border);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  transition: all 0.3s cubic-bezier(
+    0.34,
+    1.56,
+    0.64,
+    1
+  );
+
   position: relative;
   overflow: hidden;
 }
+
+
+/* ================================================= */
+/* ================= DASHBOARD MOBILE ============== */
+/* ================================================= */
+
+@media (max-width: 768px) {
+
+  .dashboard-card {
+    width: calc(100% - 30px);
+    max-width: none;
+
+    padding: 24px 18px;
+
+    border-radius: 18px;
+  }
+
+  .dashboard-title {
+    font-size: 25px;
+    margin-bottom: 20px;
+  }
+
+  .profile-info,
+  .profile-edit {
+    gap: 14px;
+  }
+
+  .profile-row {
+    padding: 14px;
+    gap: 6px;
+  }
+}
+
+
+/* ================================================= */
+/* ============== DASHBOARD SMALL MOBILE =========== */
+/* ================================================= */
+
+@media (max-width: 480px) {
+
+  .dashboard-card {
+    width: calc(100% - 20px);
+
+    padding: 20px 14px;
+
+    border-radius: 16px;
+  }
+
+  .dashboard-title {
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+
+  .profile-info,
+  .profile-edit {
+    gap: 12px;
+  }
+
+  .profile-row {
+    padding: 12px;
+    border-radius: 12px;
+  }
+}
+/* ================================================= */
+/* ================= PROFILE ROW =================== */
+/* ================================================= */
 
 .profile-row::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent, rgba(15, 107, 255, 0.1), transparent);
+
+  background: linear-gradient(
+    135deg,
+    transparent,
+    rgba(15, 107, 255, 0.1),
+    transparent
+  );
+
   opacity: 0;
   transition: opacity 0.3s ease;
+
+  pointer-events: none;
 }
 
 .profile-row:hover {
-  background: linear-gradient(135deg, rgba(15, 107, 255, 0.08), rgba(124, 58, 237, 0.08));
+  background: linear-gradient(
+    135deg,
+    rgba(15, 107, 255, 0.08),
+    rgba(124, 58, 237, 0.08)
+  );
+
   border-color: var(--dashboard-primary);
-  box-shadow: 0 8px 24px var(--dashboard-glow), inset 0 0 20px rgba(15, 107, 255, 0.05);
+
+  box-shadow:
+    0 8px 24px var(--dashboard-glow),
+    inset 0 0 20px rgba(15, 107, 255, 0.05);
+
   transform: translateY(-2px);
 }
 
@@ -351,24 +864,58 @@ button:active {
   font-weight: 600;
   color: #1f2937;
   font-size: clamp(14px, 2vw, 16px);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
+
+/* ================================================= */
+/* ================= PROFILE EDIT ================== */
+/* ================================================= */
+
 .profile-edit input {
+  width: 100%;
+
   padding: 12px 16px;
+
   border-radius: 12px;
   border: 2px solid var(--dashboard-border);
+
   font-size: clamp(13px, 2vw, 15px);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  transition: all 0.3s cubic-bezier(
+    0.34,
+    1.56,
+    0.64,
+    1
+  );
+
   background: white;
   color: #1f2937;
+
+  min-height: 44px;
 }
 
 .profile-edit input:focus {
   outline: none;
+
   border-color: var(--dashboard-primary);
-  box-shadow: 0 0 0 4px rgba(15, 107, 255, 0.15), 0 8px 20px var(--dashboard-glow);
-  background: linear-gradient(135deg, #f8fafc, #ffffff);
+
+  box-shadow:
+    0 0 0 4px rgba(15, 107, 255, 0.15),
+    0 8px 20px var(--dashboard-glow);
+
+  background: linear-gradient(
+    135deg,
+    #f8fafc,
+    #ffffff
+  );
 }
+
+
+/* ================================================= */
+/* ================= EDIT ACTIONS ================== */
+/* ================================================= */
 
 .edit-actions {
   display: flex;
@@ -380,14 +927,27 @@ button:active {
 .save-btn,
 .cancel-btn,
 .edit-btn {
-  padding: clamp(11px, 2vw, 13px) clamp(18px, 4vw, 28px);
+  padding: clamp(11px, 2vw, 13px)
+           clamp(18px, 4vw, 28px);
+
   border: none;
   border-radius: 12px;
+
   cursor: pointer;
+
   font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  transition: all 0.3s cubic-bezier(
+    0.34,
+    1.56,
+    0.64,
+    1
+  );
+
   font-size: clamp(12px, 2vw, 14px);
+
   min-height: 44px;
+
   position: relative;
   overflow: hidden;
 }
@@ -395,24 +955,46 @@ button:active {
 .save-btn::before,
 .edit-btn::before {
   content: "";
+
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+
   opacity: 0;
+
   transition: opacity 0.3s ease;
+
+  pointer-events: none;
 }
 
+
+/* ================= SAVE BUTTON ================= */
+
 .save-btn {
-  background: linear-gradient(135deg, var(--dashboard-primary), var(--dashboard-secondary));
+  background: linear-gradient(
+    135deg,
+    var(--dashboard-primary),
+    var(--dashboard-secondary)
+  );
+
   color: white;
+
   flex: 1;
   min-width: 120px;
+
   box-shadow: 0 8px 20px var(--dashboard-glow);
 }
 
 .save-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 32px var(--dashboard-glow);
+
+  box-shadow:
+    0 12px 32px var(--dashboard-glow);
 }
 
 .save-btn:active {
@@ -423,90 +1005,293 @@ button:active {
   opacity: 1;
 }
 
+
+/* ================= CANCEL BUTTON ================= */
+
 .cancel-btn {
   background: #f3f4f6;
+
   color: #374151;
+
   flex: 1;
   min-width: 120px;
+
   border: 1.5px solid #e5e7eb;
 }
 
 .cancel-btn:hover {
   background: #e5e7eb;
   border-color: #d1d5db;
+
   transform: translateY(-2px);
 }
 
+
+/* ================= EDIT BUTTON ================= */
+
 .edit-btn {
-  background: linear-gradient(135deg, var(--dashboard-primary), var(--dashboard-secondary));
-  color: white;
-  margin-top: 10px;
-  box-shadow: 0 8px 20px var(--dashboard-glow);
   width: 100%;
+
+  background: linear-gradient(
+    135deg,
+    var(--dashboard-primary),
+    var(--dashboard-secondary)
+  );
+
+  color: white;
+
+  margin-top: 10px;
+
+  box-shadow: 0 8px 20px var(--dashboard-glow);
 }
 
 .edit-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 32px var(--dashboard-glow);
+
+  box-shadow:
+    0 12px 32px var(--dashboard-glow);
 }
 
 .edit-btn:hover::before {
   opacity: 1;
 }
 
+
+/* ================================================= */
+/* ================= PROFILE STATS ================= */
+/* ================================================= */
+
 .profile-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(140px, 1fr));
+
   gap: 16px;
+
   margin-top: 24px;
 }
 
-@media (max-width: 768px) {
-  .profile-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .profile-stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 .stat-small-card {
-  background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+  background: linear-gradient(
+    135deg,
+    #dbeafe,
+    #e0f2fe
+  );
+
   border-radius: 12px;
+
   padding: 16px;
+
   text-align: center;
+
   border: 1px solid #bfdbfe;
+
+  min-width: 0;
 }
 
 .stat-small-card h4 {
   margin: 0;
-  font-size: 28px;
+
+  font-size: clamp(22px, 5vw, 28px);
+
   color: #667eea;
+
   font-weight: 700;
+
+  overflow-wrap: anywhere;
 }
 
 .stat-small-card p {
   margin: 6px 0 0 0;
+
   font-size: 12px;
+
   color: #475569;
+
   font-weight: 500;
+
+  line-height: 1.4;
 }
 
-/* RECENT ACTIVITIES WITH ENHANCED VISUALS */
+
+/* ================================================= */
+/* ============== RECENT ACTIVITIES =============== */
+/* ================================================= */
+
 .activity-section {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(118, 75, 162, 0.02));
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.02),
+    rgba(118, 75, 162, 0.02)
+  );
+
   border: 1px solid rgba(102, 126, 234, 0.15);
+
+  width: 100%;
 }
 
 .activity-item {
   padding: clamp(12px, 2vw, 16px);
+
   background: white;
+
   border-radius: 12px;
+
   border-left: 4px solid #667eea;
+
   transition: all 0.3s ease;
+
+  width: 100%;
+
+  overflow-wrap: anywhere;
+}
+
+.activity-item:hover {
+  transform: translateX(3px);
+
+  box-shadow:
+    0 6px 18px rgba(102, 126, 234, 0.12);
+}
+
+
+/* ================================================= */
+/* ================= TABLET ======================== */
+/* ================================================= */
+
+@media (max-width: 768px) {
+
+  .profile-row {
+    padding: 14px;
+  }
+
+  .profile-row label {
+    font-size: 11px;
+  }
+
+  .profile-row p {
+    font-size: 14px;
+  }
+
+  .profile-edit input {
+    padding: 11px 14px;
+  }
+
+  .edit-actions {
+    gap: 10px;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    min-width: 0;
+  }
+
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-small-card {
+    padding: 14px 10px;
+  }
+
+  .activity-item {
+    padding: 13px;
+  }
+}
+
+
+/* ================================================= */
+/* ================= SMALL MOBILE ================== */
+/* ================================================= */
+
+@media (max-width: 480px) {
+
+  .profile-row {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .profile-row label {
+    font-size: 10px;
+    letter-spacing: 0.4px;
+  }
+
+  .profile-row p {
+    font-size: 13px;
+  }
+
+  .profile-edit input {
+    padding: 11px 12px;
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
+  /* Stack Save + Cancel */
+
+  .edit-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    width: 100%;
+    flex: none;
+    min-width: 0;
+  }
+
+  .edit-btn {
+    min-height: 44px;
+  }
+
+  /* One stat per row */
+
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-small-card {
+    padding: 14px;
+  }
+
+  .stat-small-card h4 {
+    font-size: 24px;
+  }
+
+  .activity-item {
+    padding: 12px 10px;
+    border-left-width: 3px;
+    border-radius: 10px;
+  }
+}
+
+
+/* ================================================= */
+/* ================= VERY SMALL ==================== */
+/* ================================================= */
+
+@media (max-width: 360px) {
+
+  .profile-row {
+    padding: 10px;
+  }
+
+  .profile-edit input {
+    font-size: 13px;
+  }
+
+  .save-btn,
+  .cancel-btn,
+  .edit-btn {
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  .activity-item {
+    font-size: 13px;
+  }
 }
 
 .activity-item:hover {
